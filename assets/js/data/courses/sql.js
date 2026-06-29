@@ -571,5 +571,381 @@ SELECT * FROM users WHERE city = '東京';
         },
       ],
     },
+    {
+      id: "sql-8",
+      title: "CASE式と条件付き集計",
+      level: 2,
+      duration: "13分",
+      body: `
+# CASE式と条件付き集計
+
+\`CASE\` を使うと、SQLの中で「もし〜なら」という分岐ができます。レポート作成で大活躍します。
+
+## CASE 式の基本
+
+\`\`\`sql
+SELECT name, price,
+  CASE
+    WHEN price >= 50000 THEN '高価格'
+    WHEN price >= 5000  THEN '中価格'
+    ELSE '低価格'
+  END AS 価格帯
+FROM products;
+\`\`\`
+
+## 条件付き集計（ピボット的な集計）
+
+\`SUM\` と \`CASE\` を組み合わせると、「条件ごとの件数/合計」を1行にまとめられます。
+
+\`\`\`sql
+SELECT
+  COUNT(*) AS 全体,
+  SUM(CASE WHEN city = '東京' THEN 1 ELSE 0 END) AS 東京,
+  SUM(CASE WHEN city = '大阪' THEN 1 ELSE 0 END) AS 大阪
+FROM users;
+\`\`\`
+
+:::tip
+\`CASE\` は SELECT だけでなく ORDER BY や WHERE でも使えます。「特定の値を先頭に並べる」など柔軟な制御が可能です。
+:::
+`,
+      exercises: [
+        {
+          type: "sql",
+          label: "▶ 価格帯でラベル付け",
+          spec: {
+            starter: `SELECT name, price,
+  CASE WHEN price >= 50000 THEN '高価格'
+       WHEN price >= 5000  THEN '中価格'
+       ELSE '低価格' END AS 価格帯
+FROM products;`,
+          },
+        },
+        {
+          type: "sql",
+          label: "✏️ 練習: 在庫ありなしを分類",
+          spec: {
+            starter: `-- products に対し、name と、stock が 0 なら '在庫なし'、それ以外は '在庫あり' を
+-- 「在庫状況」という列名で表示してください。
+`,
+            expected: "SELECT name, CASE WHEN stock = 0 THEN '在庫なし' ELSE '在庫あり' END AS 在庫状況 FROM products;",
+            requires: [
+              { pattern: "case", hint: "CASE 式で分岐しましょう。" },
+              { pattern: "stock", hint: "stock の値で判定しましょう。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "SQLの中で「もし〜なら」という分岐を表現するのは？",
+          choices: ["IF文", "CASE式", "WHILE"],
+          answer: 1,
+          explain: "標準SQLでは CASE WHEN ... THEN ... END を使います。",
+        },
+        {
+          q: "`SUM(CASE WHEN city='東京' THEN 1 ELSE 0 END)` が求めるものは？",
+          choices: ["東京の人数", "全体の人数", "東京以外の人数"],
+          answer: 0,
+          explain: "条件に合う行だけ1を足すので、東京の件数になります。条件付き集計の定番です。",
+        },
+      ],
+    },
+    {
+      id: "sql-9",
+      title: "ウィンドウ関数と CTE(WITH)",
+      level: 3,
+      duration: "17分",
+      body: `
+# ウィンドウ関数と CTE(WITH)
+
+上級SQLの花形。「グループ集計しつつ、各行も残す」「ランキング」「累計」が書けます。
+
+## ウィンドウ関数
+
+\`GROUP BY\` は行をまとめてしまいますが、ウィンドウ関数は**各行を残したまま**集計を横に付けられます。
+
+\`\`\`sql
+SELECT name, city, age,
+  AVG(age) OVER (PARTITION BY city) AS 同じ市の平均年齢,
+  RANK()   OVER (ORDER BY age DESC) AS 年齢ランク
+FROM users;
+\`\`\`
+
+- \`OVER (PARTITION BY ...)\` … グループごとに計算
+- \`RANK() / ROW_NUMBER()\` … 順位付け
+- \`SUM(...) OVER (ORDER BY ...)\` … 累計
+
+## CTE（WITH句）― 名前付きの一時結果
+
+複雑なクエリを「段階」に分けて読みやすくします。
+
+\`\`\`sql
+WITH city_avg AS (
+  SELECT city, AVG(age) AS avg_age FROM users GROUP BY city
+)
+SELECT u.name, u.city, c.avg_age
+FROM users u
+JOIN city_avg c ON u.city = c.city;
+\`\`\`
+
+:::tip
+サブクエリのネストが深くなったら CTE の出番。「上から読める」クエリは、未来の自分とチームを救います。
+:::
+`,
+      exercises: [
+        {
+          type: "sql",
+          label: "▶ 年齢ランキング",
+          spec: {
+            starter: `SELECT name, age,
+  RANK() OVER (ORDER BY age DESC) AS 年齢順位
+FROM users;`,
+          },
+        },
+        {
+          type: "sql",
+          label: "✏️ 練習: 都市ごとの平均を各行に付ける",
+          spec: {
+            starter: `-- users の各行に、name, city, age と、
+-- 「同じ city の平均年齢」を avg_age という列で付けてください（ウィンドウ関数を使用）。
+`,
+            expected: "SELECT name, city, age, AVG(age) OVER (PARTITION BY city) AS avg_age FROM users;",
+            requires: [
+              { pattern: "over", hint: "OVER (...) のウィンドウ関数を使いましょう。" },
+              { pattern: "partition\\s+by", hint: "PARTITION BY city で市ごとに区切りましょう。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "各行を残したまま、グループ集計を横に付けられるのは？",
+          choices: ["GROUP BY", "ウィンドウ関数(OVER)", "DELETE"],
+          answer: 1,
+          explain: "ウィンドウ関数(OVER句)は行を集約せずに集計値を付与できます。",
+        },
+        {
+          q: "複雑なクエリを名前付きの段階に分けて読みやすくするのは？",
+          choices: ["CTE(WITH句)", "INDEX", "TRIGGER"],
+          answer: 0,
+          explain: "WITH句(CTE)で一時的な名前付き結果を作れます。",
+        },
+      ],
+    },
+    {
+      id: "sql-10",
+      title: "【神】データベース設計の実践",
+      level: 4,
+      duration: "17分",
+      body: `
+# 【神】データベース設計の実践
+
+良いシステムは良いテーブル設計から。後から変えにくいからこそ、最初の設計が神の腕の見せ所です。
+
+## 設計のステップ
+
+1. **エンティティ**を洗い出す（ユーザー、商品、注文…）
+2. **関連(リレーション)**を決める（1対多、多対多）
+3. **正規化**で重複を排除（1つの事実は1か所）
+4. よく使う検索に**インデックス**
+
+## 多対多は「中間テーブル」で
+
+「ユーザーは複数の商品を買い、商品は複数のユーザーに買われる」＝多対多。これは中間テーブルで表現します。
+
+\`\`\`sql
+-- orders が users と products をつなぐ中間テーブル
+CREATE TABLE orders (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,     -- FK → users.id
+  product_id INTEGER NOT NULL,  -- FK → products.id
+  quantity INTEGER NOT NULL
+);
+\`\`\`
+
+## 制約でデータを守る
+
+- \`NOT NULL\` … 必須
+- \`UNIQUE\` … 重複禁止（例: email）
+- \`FOREIGN KEY\` … 関連の整合性
+- \`CHECK\` … 値の範囲（例: \`CHECK(quantity > 0)\`）
+
+## 設計のトレードオフ
+
+正規化は整合性に強いが、読み取りでJOINが増える。超高頻度の読み取りでは**あえて非正規化**することも。「正しさ」と「速さ」の判断が神の領域。
+
+:::warn
+「とりあえず1つの巨大テーブル」は将来の地獄。最初に関連を整理することが、後の自分を救います。
+:::
+`,
+      exercises: [
+        {
+          type: "sql",
+          label: "▶ 設計を確認する（中間テーブル経由の集計）",
+          spec: {
+            starter: `-- 多対多を中間テーブル orders 経由で結合し、商品ごとの販売数量を集計
+SELECT p.name AS 商品, SUM(o.quantity) AS 販売数
+FROM products p
+JOIN orders o ON o.product_id = p.id
+GROUP BY p.id
+ORDER BY 販売数 DESC;`,
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "「多対多」の関連を表現するのに使うのは？",
+          choices: ["中間テーブル", "1つの巨大テーブル", "インデックス"],
+          answer: 0,
+          explain: "中間テーブル（例: orders）で多対多を1対多×2に分解します。",
+        },
+        {
+          q: "email の重複登録を防ぐのに使う制約は？",
+          choices: ["UNIQUE", "DEFAULT", "ORDER BY"],
+          answer: 0,
+          explain: "UNIQUE 制約で重複を禁止できます。",
+        },
+        {
+          q: "超高頻度の読み取りで、あえて重複を持たせる設計判断は？",
+          choices: ["非正規化", "全文検索", "削除"],
+          answer: 0,
+          explain: "読み取り最適化のための非正規化。整合性とのトレードオフを判断します。",
+        },
+      ],
+    },
+    {
+      id: "sql-11",
+      title: "【神】トランザクションと同時実行制御",
+      level: 4,
+      duration: "16分",
+      body: `
+# 【神】トランザクションと同時実行制御
+
+複数人が同時に使うシステムで、データを壊さないための深い知識です。
+
+## ACID特性
+
+トランザクションが守るべき4つの性質。
+
+- **A** 原子性 … 全部成功か全部取消（中途半端を作らない）
+- **C** 一貫性 … ルール（制約）を常に満たす
+- **I** 独立性 … 同時実行でも互いに干渉しない
+- **D** 永続性 … コミットしたら消えない
+
+## 送金の例
+
+\`\`\`sql
+BEGIN;
+UPDATE accounts SET balance = balance - 1000 WHERE id = 1;
+UPDATE accounts SET balance = balance + 1000 WHERE id = 2;
+COMMIT;   -- 失敗時は ROLLBACK で取消
+\`\`\`
+
+片方だけ実行されたら大惨事。だから不可分にします。
+
+## 同時実行の問題と分離レベル
+
+同時アクセスで起きうる現象：
+
+- **ダーティリード** … 未コミットの値を読む
+- **ノンリピータブルリード** … 同じ行を2回読むと値が違う
+- **ファントムリード** … 2回読むと行数が違う
+
+これを **分離レベル**（Read Committed / Repeatable Read / Serializable）で制御します。厳しくするほど安全だが遅くなるトレードオフ。
+
+## デッドロックと楽観/悲観ロック
+
+- **デッドロック**: 互いの解放を待ち合って固まる → 取得順を統一して回避
+- **悲観ロック**: 先にロック（競合が多い場面）
+- **楽観ロック**: バージョン番号で衝突検知（競合が少ない場面）
+
+:::tip
+「お金・在庫・予約」が絡む処理は必ずトランザクション。神は同時実行を制する者なり。
+:::
+`,
+      quiz: [
+        {
+          q: "トランザクションの「全部成功か全部取消」という性質は？",
+          choices: ["原子性(Atomicity)", "永続性(Durability)", "独立性(Isolation)"],
+          answer: 0,
+          explain: "原子性です。中途半端な状態を作らないことを保証します。",
+        },
+        {
+          q: "未コミットのデータを他のトランザクションが読んでしまう問題は？",
+          choices: ["ダーティリード", "デッドロック", "インデックススキャン"],
+          answer: 0,
+          explain: "ダーティリードです。分離レベルを上げると防げます。",
+        },
+        {
+          q: "互いにロックの解放を待ち続けて処理が固まる状態は？",
+          choices: ["デッドロック", "正規化", "キャッシュヒット"],
+          answer: 0,
+          explain: "デッドロックです。ロック取得順を統一するなどで回避します。",
+        },
+      ],
+    },
+    {
+      id: "sql-12",
+      title: "【神】スケールするデータ基盤",
+      level: 4,
+      duration: "16分",
+      body: `
+# 【神】スケールするデータ基盤
+
+データ量とアクセスが爆発しても耐えるDBの作り方。システム設計の集大成です。
+
+## 読み取りを増やす：レプリケーション
+
+DBを「主(Primary)」と「複製(Replica)」に分け、書き込みは主へ、読み取りは複製へ振り分けます。読み取りが多いサービスで有効。
+
+\`\`\`
+書き込み → [Primary] ──複製──▶ [Replica] [Replica]
+読み取り ←────────────────────┘（複数で分散）
+\`\`\`
+
+## 巨大化を分割：シャーディング / パーティショニング
+
+1つのテーブルを複数に分割して負荷を分散。
+
+- **水平分割(シャーディング)**: 行で分ける（user_id の範囲やハッシュで別DBへ）
+- **垂直分割**: 列で分ける（あまり使わない列を別テーブルへ）
+
+## キャッシュ層
+
+頻繁に読むデータは Redis などのインメモリに置き、DBへの問い合わせを減らす。
+
+## RDB と NoSQL の使い分け
+
+- **RDB（MySQL/PostgreSQL）**: 強い整合性・複雑なJOIN・トランザクション
+- **NoSQL（MongoDB/DynamoDB/Redis）**: 柔軟なスキーマ・水平スケール・超高速read
+
+「銀行口座はRDB、SNSのタイムラインはNoSQL＋キャッシュ」のように、**特性で選ぶ**のが神。
+
+:::warn
+スケール対策は複雑さを増やす。まずはインデックスとクエリ改善（上級編）で足りないか確認。**早すぎる最適化は害**。計測してから分散へ。
+:::
+`,
+      quiz: [
+        {
+          q: "書き込みを主、読み取りを複製に振り分けて読み取りを増やす手法は？",
+          choices: ["レプリケーション", "正規化", "デッドロック"],
+          answer: 0,
+          explain: "レプリケーション（主/複製構成）です。読み取り負荷を分散できます。",
+        },
+        {
+          q: "1つの巨大テーブルを行で分割して負荷分散するのは？",
+          choices: ["シャーディング(水平分割)", "インデックス", "CASE式"],
+          answer: 0,
+          explain: "シャーディング（水平分割）です。user_idのハッシュ等で分けます。",
+        },
+        {
+          q: "強い整合性・複雑なJOIN・トランザクションが必要な領域に向くのは？",
+          choices: ["RDB(リレーショナルDB)", "画像ファイル", "CSV"],
+          answer: 0,
+          explain: "RDBが得意分野です。柔軟さ・超高速readはNoSQLが得意で、特性で使い分けます。",
+        },
+      ],
+    },
   ],
 };

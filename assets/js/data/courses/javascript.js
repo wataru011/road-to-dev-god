@@ -681,5 +681,372 @@ class BankAccount {
         },
       ],
     },
+    {
+      id: "js-9",
+      title: "JSON とデータのやり取り",
+      level: 2,
+      duration: "13分",
+      body: `
+# JSON とデータのやり取り
+
+サーバーとのデータ交換は **JSON**（JavaScript Object Notation）が標準です。JSの世界とAPIの世界をつなぐ要です。
+
+## 文字列 ⇄ オブジェクト
+
+通信で受け取るのは「JSON文字列」。プログラムで扱うには「オブジェクト」に変換します。
+
+\`\`\`javascript
+const text = '{"name":"花子","age":34}';
+const obj = JSON.parse(text);   // 文字列 → オブジェクト
+console.log(obj.name);          // 花子
+
+const back = JSON.stringify(obj); // オブジェクト → 文字列
+\`\`\`
+
+## ネストしたデータ
+
+\`\`\`javascript
+const data = {
+  user: "太郎",
+  orders: [
+    { item: "PC", price: 120000 },
+    { item: "マウス", price: 2500 },
+  ],
+};
+console.log(data.orders[0].item); // PC
+\`\`\`
+
+## よくある加工
+
+\`map\` / \`filter\` / \`reduce\` と組み合わせると、APIレスポンスを自在に扱えます。
+
+:::warn
+\`JSON.parse\` は不正な文字列で例外を投げます。通信データは \`try/catch\` で囲むのが安全です（次レッスン）。
+:::
+`,
+      exercises: [
+        {
+          type: "js",
+          label: "✏️ JSONを集計する",
+          spec: {
+            starter: `// 注文の配列を受け取り、price の合計を返す関数 totalPrice(orders) を作ってください。
+// 例: totalPrice([{item:"A",price:100},{item:"B",price:250}]) → 350
+function totalPrice(orders) {
+  // ここに書く（reduce が便利）
+}`,
+            tests: [
+              { call: 'totalPrice([{item:"A",price:100},{item:"B",price:250}])', expect: 350 },
+              { call: 'totalPrice([{item:"X",price:1200}])', expect: 1200 },
+              { call: "totalPrice([])", expect: 0 },
+            ],
+            requires: [
+              { pattern: "price", hint: "各要素の price を合計しましょう。" },
+              { pattern: "reduce|for|forEach", hint: "reduce か繰り返しで合計しましょう。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "JSON文字列をJavaScriptのオブジェクトに変換する関数は？",
+          choices: ["JSON.stringify", "JSON.parse", "JSON.read"],
+          answer: 1,
+          explain: "JSON.parse が文字列→オブジェクト、JSON.stringify がオブジェクト→文字列です。",
+        },
+        {
+          q: "オブジェクトをサーバーへ送るため文字列化する関数は？",
+          choices: ["JSON.parse", "JSON.stringify", "toString"],
+          answer: 1,
+          explain: "JSON.stringify で送信用の文字列にします。",
+        },
+      ],
+    },
+    {
+      id: "js-10",
+      title: "モジュールと関数型プログラミング",
+      level: 3,
+      duration: "15分",
+      body: `
+# モジュールと関数型プログラミング
+
+大規模な開発では、コードを**分割**し、**副作用を抑えて**保守性を高めます。
+
+## モジュール（import / export）
+
+機能をファイルごとに分け、必要なものだけ読み込みます（このサイト自身もこの仕組みで動いています）。
+
+\`\`\`javascript
+// math.js
+export function add(a, b) { return a + b; }
+export const PI = 3.14;
+
+// main.js
+import { add, PI } from "./math.js";
+console.log(add(2, 3)); // 5
+\`\`\`
+
+## 高階関数（関数を受け取る/返す関数）
+
+\`map\`/\`filter\` も高階関数。自分でも作れます。
+
+\`\`\`javascript
+const withLog = (fn) => (...args) => {
+  console.log("呼び出し:", args);
+  return fn(...args);
+};
+const add = (a, b) => a + b;
+const loggedAdd = withLog(add);
+\`\`\`
+
+## 純粋関数と不変性
+
+- **純粋関数**: 同じ入力なら必ず同じ出力。外部を変更しない（副作用なし）
+- **不変性**: 元データを書き換えず、新しいデータを作る
+
+\`\`\`javascript
+// ❌ 元の配列を破壊
+arr.push(4);
+// ✅ 新しい配列を作る（不変）
+const next = [...arr, 4];
+\`\`\`
+
+:::tip
+純粋関数はテストしやすく、バグが起きにくい。神レベルの設計・テストの土台です。
+:::
+`,
+      exercises: [
+        {
+          type: "js",
+          label: "✏️ 不変に更新する",
+          spec: {
+            starter: `// 配列 arr と値 v を受け取り、元の配列を変更せず
+// 末尾に v を加えた「新しい配列」を返す関数 append(arr, v) を作ってください。
+function append(arr, v) {
+  // ここに書く（スプレッド構文 [...arr, v] を使う）
+}`,
+            tests: [
+              { call: "append([1,2], 3)", expect: [1, 2, 3] },
+              { call: "(function(){ const a=[1,2]; append(a,9); return a; })()", expect: [1, 2] },
+              { call: "append([], 5)", expect: [5] },
+            ],
+            requires: [
+              { pattern: "\\.\\.\\.", hint: "スプレッド構文 ...arr で元の配列をコピーしましょう。" },
+            ],
+            forbids: [
+              { pattern: "\\.push\\(", hint: "push は元の配列を破壊します。不変に（新しい配列を作って）解きましょう。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "別ファイルの関数を読み込むための構文は？",
+          choices: ["require のみ", "import / export", "include"],
+          answer: 1,
+          explain: "ES Modules では import / export を使います。",
+        },
+        {
+          q: "「同じ入力なら必ず同じ出力で、外部を変更しない」関数を何という？",
+          choices: ["純粋関数", "コンストラクタ", "コールバック地獄"],
+          answer: 0,
+          explain: "純粋関数です。テストしやすくバグが起きにくいのが利点です。",
+        },
+      ],
+    },
+    {
+      id: "js-13",
+      title: "【神】設計パターンと堅牢なコード",
+      level: 4,
+      duration: "16分",
+      body: `
+# 【神】設計パターンと堅牢なコード
+
+よくある問題には、先人が磨いた「型（パターン）」があります。車輪の再発明をやめ、意図が伝わるコードを書きます。
+
+## 代表的なパターン
+
+- **モジュールパターン**: クロージャで内部を隠し、公開APIだけ返す
+- **ファクトリ**: オブジェクト生成のロジックを1か所に集約
+- **オブザーバ**: 状態変化を購読者に通知（イベント、Reactの再描画の発想）
+- **ストラテジ**: 処理を差し替え可能にする（関数を渡す）
+
+\`\`\`javascript
+// ストラテジ：並び替え方を外から注入
+function sortBy(arr, strategy) {
+  return [...arr].sort(strategy);
+}
+sortBy(users, (a, b) => a.age - b.age);
+\`\`\`
+
+## 堅牢さの技
+
+- **早期リターン**でネストを浅く
+- **ガード節**で不正値を先に弾く
+- **エラーは握り潰さない**（適切に伝播 or ログ）
+- **マジックナンバーを定数化**
+
+\`\`\`javascript
+function price(qty) {
+  if (qty <= 0) throw new Error("数量が不正");  // ガード節
+  const UNIT = 500;                               // 定数化
+  return qty * UNIT;
+}
+\`\`\`
+
+:::tip
+パターンは目的ではなく道具。「なぜこの形か」を説明できることが神の条件。乱用は複雑化を招きます（YAGNI）。
+:::
+`,
+      quiz: [
+        {
+          q: "状態変化を購読者に通知するパターンは？",
+          choices: ["オブザーバ", "ファクトリ", "シングルトン"],
+          answer: 0,
+          explain: "オブザーバパターンです。イベントやReactの再描画の発想に通じます。",
+        },
+        {
+          q: "不正な入力を関数の冒頭で弾く書き方を何という？",
+          choices: ["ガード節（早期リターン）", "無限ループ", "グローバル変数"],
+          answer: 0,
+          explain: "ガード節で先に弾くと、本処理のネストが浅くなり読みやすくなります。",
+        },
+      ],
+    },
+    {
+      id: "js-14",
+      title: "【神】テストとデバッグの極意",
+      level: 4,
+      duration: "15分",
+      body: `
+# 【神】テストとデバッグの極意
+
+神は「動いた」で満足しません。「正しいと証明できる」状態を作ります。
+
+## 自動テスト（Jest のイメージ）
+
+\`\`\`javascript
+import { totalPrice } from "./cart.js";
+
+test("合計金額を計算する", () => {
+  expect(totalPrice([{price:100},{price:250}])).toBe(350);
+});
+
+test("空なら0", () => {
+  expect(totalPrice([])).toBe(0);
+});
+\`\`\`
+
+> このサイトの演習が「複数入力で関数を検証」していたのも同じ考え方。テスト＝仕様の実行可能なドキュメントです。
+
+## テストの観点
+
+- **正常系**: 普通の入力
+- **異常系**: 不正・例外的な入力
+- **境界値**: 0件、1件、最大値など端っこ
+
+## デバッグの手順
+
+1. **再現**させる（最小の手順を特定）
+2. \`console.log\` / ブレークポイントで**状態を観察**
+3. **仮説**を立て、1つずつ検証
+4. 直したら**テストを追加**して再発を防ぐ
+
+\`\`\`javascript
+console.log("ここまでのusers:", users);   // 状態の可視化
+console.table(users);                     // 配列/オブジェクトを表で
+\`\`\`
+
+:::warn
+「たぶんここが原因」で当てずっぽうに直さない。**観察→仮説→検証**を回すのが最短です。
+:::
+`,
+      quiz: [
+        {
+          q: "テストで必ず確認すべき「端っこの値」を何という？",
+          choices: ["境界値", "平均値", "中央値"],
+          answer: 0,
+          explain: "0件・1件・最大値などの境界値はバグが出やすい重要ポイントです。",
+        },
+        {
+          q: "バグ修正で最初にやるべきことは？",
+          choices: ["とりあえずコードを変える", "確実に再現させる", "全部書き直す"],
+          answer: 1,
+          explain: "再現できないバグは直せません。最小の再現手順を特定するのが第一歩です。",
+        },
+        {
+          q: "バグを直した後にすべきことは？",
+          choices: ["再発防止のテストを追加する", "何もしない", "ログを全部消す"],
+          answer: 0,
+          explain: "テストを追加すれば同じバグの再発を自動で防げます。",
+        },
+      ],
+    },
+    {
+      id: "js-15",
+      title: "【神】TypeScript ― 型で守る盾",
+      level: 4,
+      duration: "16分",
+      body: `
+# 【神】TypeScript ― 型で守る盾
+
+大規模なJavaScriptは型が無いゆえに壊れやすい。**TypeScript**は型を足し、実行前にバグを発見します。Javaで学んだ「静的型付け」の恩恵をJSの世界へ。
+
+## 型注釈
+
+\`\`\`typescript
+function greet(name: string, age: number): string {
+  return \`\${name}さん(\${age}歳)\`;
+}
+greet("太郎", 28);
+// greet("太郎", "28"); // ❌ コンパイルエラー：number に string は渡せない
+\`\`\`
+
+## 型エイリアス / インターフェース
+
+データの形を定義します。
+
+\`\`\`typescript
+interface User {
+  id: number;
+  name: string;
+  email?: string;   // ? は任意
+}
+
+const u: User = { id: 1, name: "花子" };
+\`\`\`
+
+## ジェネリクス（Javaと同じ発想）
+
+\`\`\`typescript
+function first<T>(arr: T[]): T | undefined {
+  return arr[0];
+}
+\`\`\`
+
+## なぜ神レベルで効くか
+
+- 大人数開発で**仕様が型として共有**される
+- リファクタリング時、壊れた箇所をコンパイラが教えてくれる
+- エディタ補完が強力になり生産性が上がる
+
+:::tip
+JS → TS への移行は「少しずつ型を足す」ことが可能。完璧主義より一歩ずつ。型は未来の自分とチームへの思いやりです。
+:::
+`,
+      quiz: [
+        {
+          q: "TypeScriptがJavaScriptに加える最大の価値は？",
+          choices: ["実行速度が10倍になる", "静的な型チェックで実行前にバグを発見できる", "ファイルが軽くなる"],
+          answer: 1,
+          explain: "型注釈により、型の不一致などをコンパイル時に検出できます。",
+        },
+        {
+          q: "データの形（プロパティと型）を定義するのに使うのは？",
+          choices: ["interface / type", "for ループ", "console.log"],
+          answer: 0,
+          explain: "interface や type でオブジェクトの形を定義します。",
+        },
+      ],
+    },
   ],
 };
