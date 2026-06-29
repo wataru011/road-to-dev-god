@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/dev-learning-platform-gapnss
   workflow_dispatch:
 
 permissions:
