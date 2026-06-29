@@ -3,6 +3,7 @@ import { renderMarkdown } from "./markdown.js";
 import * as P from "./progress.js";
 import { createJsPlayground } from "./runners/js-runner.js";
 import { createSqlPlayground } from "./runners/sql-runner.js";
+import { createHtmlPlayground } from "./runners/html-runner.js";
 import { createQuiz } from "./runners/quiz.js";
 
 const app = document.getElementById("app");
@@ -321,6 +322,7 @@ function renderLesson(courseId, lessonId) {
         if (r.xpGained) { updateRank(); toast(`正解！ +${r.xpGained} XP`); }
       };
       if (ex.type === "sql") pg = createSqlPlayground(ex.spec, onSolved);
+      else if (ex.type === "html") pg = createHtmlPlayground(ex.spec);
       else pg = createJsPlayground(ex.spec, onSolved);
       el.appendChild(pg);
     });
