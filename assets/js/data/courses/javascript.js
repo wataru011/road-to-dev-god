@@ -57,11 +57,18 @@ console.log(\`\${name}さんは\${age}歳です\`);`,
           type: "js",
           label: "✏️ 練習問題",
           spec: {
-            starter: `// city という定数に "東京" を入れて、
-// "私は東京に住んでいます" と出力してください
-const city = "";
-console.log();`,
+            starter: `// city という変数に "東京" を代入し、
+// テンプレートリテラルを使って "私は東京に住んでいます" と出力してください。
+// （答えの文を直接書くのではなく、変数 city を埋め込んで組み立てましょう）
+`,
             expected: "私は東京に住んでいます",
+            requires: [
+              { pattern: "\\bcity\\b", hint: "city という変数を作って使いましょう。" },
+              { pattern: "\\$\\{\\s*city\\s*\\}", hint: "テンプレートリテラルの `${city}` で変数を埋め込みましょう。" },
+            ],
+            forbids: [
+              { pattern: "私は東京に住んでいます", hint: "完成した文章をそのまま書かないでください。変数 city を使って組み立てましょう。" },
+            ],
           },
         },
       ],
@@ -133,12 +140,27 @@ for (const fruit of ["りんご", "みかん"]) {
           type: "js",
           label: "✏️ FizzBuzz に挑戦",
           spec: {
-            starter: `// 1から15まで出力。ただし
-// 3の倍数は "Fizz"、5の倍数は "Buzz"、両方なら "FizzBuzz"
-for (let i = 1; i <= 15; i++) {
+            starter: `// 数 n を受け取り、次のルールで値を返す関数 fizzbuzz(n) を作ってください。
+//  ・3の倍数なら文字列 "Fizz"
+//  ・5の倍数なら文字列 "Buzz"
+//  ・3と5の両方の倍数なら "FizzBuzz"
+//  ・それ以外は数値 n をそのまま返す
+// （いろいろな n でテストされるので、決め打ちでは通りません）
+function fizzbuzz(n) {
   // ここに書く
 }`,
-            expected: "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz",
+            tests: [
+              { call: "fizzbuzz(1)", expect: 1 },
+              { call: "fizzbuzz(3)", expect: "Fizz" },
+              { call: "fizzbuzz(5)", expect: "Buzz" },
+              { call: "fizzbuzz(15)", expect: "FizzBuzz" },
+              { call: "fizzbuzz(7)", expect: 7 },
+              { call: "fizzbuzz(30)", expect: "FizzBuzz" },
+              { call: "fizzbuzz(9)", expect: "Fizz" },
+            ],
+            requires: [
+              { pattern: "%", hint: "剰余演算子 % を使って倍数かどうかを判定しましょう。" },
+            ],
           },
         },
       ],
@@ -197,13 +219,21 @@ const greet = (name) => \`こんにちは、\${name}さん\`;
           type: "js",
           label: "✏️ 関数を作る",
           spec: {
-            starter: `// 円の面積を返す関数 area(r) を作る（円周率は3.14）
-// area(10) を出力してください（期待値: 314）
+            starter: `// 半径 r を受け取り、円の面積を返す関数 area(r) を作ってください。
+// 円周率は 3.14 とします（面積 = 半径 × 半径 × 円周率）。
+// 複数の半径でテストされます。
 function area(r) {
   // ここに書く
-}
-console.log(area(10));`,
-            expected: "314",
+}`,
+            tests: [
+              { call: "area(10)", expect: 314 },
+              { call: "area(2)", expect: 12.56 },
+              { call: "area(0)", expect: 0 },
+            ],
+            requires: [
+              { pattern: "3\\.14", hint: "円周率 3.14 を使って計算しましょう。" },
+              { pattern: "\\br\\b", hint: "引数 r を使って計算しましょう。" },
+            ],
           },
         },
       ],
@@ -272,16 +302,22 @@ const names = users.map(u => u.name); // ["太郎","花子"]
           type: "js",
           label: "✏️ map と filter",
           spec: {
-            starter: `const users = [
-  { name: "太郎", age: 28 },
-  { name: "花子", age: 34 },
-  { name: "健", age: 22 },
-];
-// 30歳以上のユーザーの名前だけを配列で出力してください
-// 期待値: ["花子"]
-const result = users; // ←ここを書き換える
-console.log(result);`,
-            expected: '["花子"]',
+            starter: `// ユーザーの配列 list を受け取り、
+// 30歳以上の人の名前だけを配列にして返す関数 adults(list) を作ってください。
+// 例: adults([{name:"太郎",age:28},{name:"花子",age:34}]) → ["花子"]
+function adults(list) {
+  // ここに書く（filter で絞り込み、map で名前を取り出す）
+}`,
+            tests: [
+              { call: 'adults([{name:"太郎",age:28},{name:"花子",age:34},{name:"健",age:22}])', expect: ["花子"] },
+              { call: 'adults([{name:"翔",age:30},{name:"涼",age:19}])', expect: ["翔"] },
+              { call: 'adults([{name:"美咲",age:41},{name:"健",age:50}])', expect: ["美咲", "健"] },
+              { call: "adults([])", expect: [] },
+            ],
+            requires: [
+              { pattern: "filter", hint: "filter で30歳以上の人を絞り込みましょう。" },
+              { pattern: "map", hint: "map で名前(name)だけを取り出しましょう。" },
+            ],
           },
         },
       ],
@@ -460,6 +496,188 @@ main();`,
           choices: ["if / else", "try / catch", "for / of"],
           answer: 1,
           explain: "try/catch で例外（エラー）を捕捉して安全に処理します。",
+        },
+      ],
+    },
+    {
+      id: "js-7",
+      title: "スコープとクロージャ",
+      level: 3,
+      duration: "16分",
+      body: `
+# スコープとクロージャ
+
+中級までは「動けばOK」でしたが、上級では**なぜそう動くのか**を理解します。その鍵がスコープとクロージャです。
+
+## スコープ（変数の有効範囲）
+
+\`let\` / \`const\` は宣言したブロック \`{ }\` の中だけで有効です（ブロックスコープ）。
+
+\`\`\`javascript
+function f() {
+  if (true) {
+    const x = 1;
+  }
+  // console.log(x); // エラー：xはブロックの外では見えない
+}
+\`\`\`
+
+## クロージャ（関数が変数を覚えている仕組み）
+
+関数は「自分が定義された場所の変数」を覚え続けます。これをクロージャと呼びます。
+
+\`\`\`javascript
+function makeCounter() {
+  let count = 0;            // この変数を…
+  return () => ++count;     // 返した関数が覚えている
+}
+const next = makeCounter();
+console.log(next()); // 1
+console.log(next()); // 2
+\`\`\`
+
+\`count\` は外から触れないのに、\`next\` を呼ぶたびに増えます。これがクロージャによる「状態の隠蔽」です。
+
+## なぜ重要か
+
+- **カウンタやキャッシュ**など、状態を安全に持てる
+- **モジュールパターン**：公開する関数だけ返し、内部変数を隠す
+- React の \`useState\` など、現代フレームワークの土台
+
+:::warn
+ループ内で \`var\` を使うとクロージャが同じ変数を共有してバグります。\`let\` を使えば反復ごとに新しい束縛になり、正しく動きます。
+:::
+`,
+      exercises: [
+        {
+          type: "js",
+          label: "✏️ クロージャでカウンタを作る",
+          spec: {
+            starter: `// 呼ぶたびに前回より step ずつ増える関数を返す createAdder(step) を作ってください。
+// 状態(現在値)はクロージャで保持し、外から直接触れないようにします。
+// 例: const a = createAdder(10); a() → 10, a() → 20, a() → 30
+function createAdder(step) {
+  // ここに書く
+}`,
+            tests: [
+              { call: "(function(){ const a = createAdder(10); return [a(), a(), a()]; })()", expect: [10, 20, 30] },
+              { call: "(function(){ const b = createAdder(5); return [b(), b()]; })()", expect: [5, 10] },
+              { call: "(function(){ const a = createAdder(1), b = createAdder(100); a(); return [a(), b()]; })()", expect: [2, 100] },
+            ],
+            requires: [
+              { pattern: "return", hint: "createAdder は『関数』を return しましょう。" },
+              { pattern: "step", hint: "引数 step を使って増分を決めましょう。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "関数が「定義された場所の変数を覚え続ける」仕組みを何と呼ぶ？",
+          choices: ["クロージャ", "コールバック", "プロトタイプ"],
+          answer: 0,
+          explain: "クロージャです。返された関数が外側の変数を保持し続けます。",
+        },
+        {
+          q: "let / const の変数が有効な範囲は？",
+          choices: ["ファイル全体", "宣言したブロック { } の中", "関数の外側すべて"],
+          answer: 1,
+          explain: "let/const はブロックスコープを持ち、宣言した { } の中でのみ有効です。",
+        },
+      ],
+    },
+    {
+      id: "js-8",
+      title: "クラスとオブジェクト指向",
+      level: 3,
+      duration: "16分",
+      body: `
+# クラスとオブジェクト指向
+
+JavaScriptでも \`class\` で「データ＋振る舞い」をまとめられます。Javaのクラスと考え方は共通です。
+
+## クラスの基本
+
+\`\`\`javascript
+class User {
+  constructor(name, age) {
+    this.name = name;
+    this.age = age;
+  }
+  greet() {
+    return \`\${this.name}（\${this.age}歳）\`;
+  }
+}
+const u = new User("太郎", 28);
+console.log(u.greet()); // 太郎（28歳）
+\`\`\`
+
+## 継承
+
+\`\`\`javascript
+class Admin extends User {
+  constructor(name, age) {
+    super(name, age);   // 親のコンストラクタを呼ぶ
+    this.role = "管理者";
+  }
+  greet() {
+    return super.greet() + " [" + this.role + "]";
+  }
+}
+\`\`\`
+
+## this の落とし穴
+
+メソッドを変数に取り出すと \`this\` が外れます。アロー関数やバインドで束縛します。
+
+\`\`\`javascript
+const g = u.greet;
+// g(); // this が undefined になりエラーになりがち
+\`\`\`
+
+:::tip
+「継承より合成（composition）」が現代の指針。深い継承ツリーより、小さな部品を組み合わせる方が壊れにくいです。これは上級編後半・神レベルの設計原則にもつながります。
+:::
+`,
+      exercises: [
+        {
+          type: "js",
+          label: "✏️ クラスを設計する",
+          spec: {
+            starter: `// 残高を管理する BankAccount クラスを作ってください。
+//  - constructor(initial) で初期残高を設定
+//  - deposit(amount) で入金（残高を増やす）
+//  - withdraw(amount) で出金。残高不足なら残高は変えず false を返す。成功なら true
+//  - getBalance() で現在残高を返す
+class BankAccount {
+  // ここに書く
+}`,
+            tests: [
+              { call: "(function(){ const a = new BankAccount(100); a.deposit(50); return a.getBalance(); })()", expect: 150 },
+              { call: "(function(){ const a = new BankAccount(100); return a.withdraw(30); })()", expect: true },
+              { call: "(function(){ const a = new BankAccount(100); a.withdraw(30); return a.getBalance(); })()", expect: 70 },
+              { call: "(function(){ const a = new BankAccount(100); return a.withdraw(999); })()", expect: false },
+              { call: "(function(){ const a = new BankAccount(100); a.withdraw(999); return a.getBalance(); })()", expect: 100 },
+            ],
+            requires: [
+              { pattern: "class\\s+BankAccount", hint: "class BankAccount を定義しましょう。" },
+              { pattern: "constructor", hint: "constructor で初期残高を設定しましょう。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "子クラスから親クラスのコンストラクタを呼ぶキーワードは？",
+          choices: ["this", "super", "extends"],
+          answer: 1,
+          explain: "super(...) で親のコンストラクタを呼びます。extends は継承の宣言です。",
+        },
+        {
+          q: "現代の設計で推奨される指針は？",
+          choices: ["深い継承ツリーを作る", "継承より合成（小さな部品の組み合わせ）", "すべてをグローバル変数にする"],
+          answer: 1,
+          explain: "「継承より合成」。組み合わせの方が変更に強く壊れにくいです。",
         },
       ],
     },

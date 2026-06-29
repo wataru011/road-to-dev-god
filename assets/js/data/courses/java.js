@@ -427,5 +427,83 @@ Controller（受け口） → Service（業務ロジック） → Repository（D
         },
       ],
     },
+    {
+      id: "java-7",
+      title: "ジェネリクスと Stream API",
+      level: 3,
+      duration: "16分",
+      body: `
+# ジェネリクスと Stream API
+
+上級のJavaでは、型安全な再利用と、宣言的なデータ処理を学びます。JavaScriptの \`map\`/\`filter\` に通じる世界です。
+
+## ジェネリクス（型のパラメータ化）
+
+\`<T>\` で「どんな型でも扱えるが、型安全」な部品を作れます。
+
+\`\`\`java
+public class Box<T> {
+    private T value;
+    public void set(T v) { this.value = v; }
+    public T get() { return value; }
+}
+
+Box<String> b = new Box<>();
+b.set("hello");
+String s = b.get();   // キャスト不要・型安全
+\`\`\`
+
+\`List<String>\` の \`<String>\` も同じ仕組み。間違った型を入れるとコンパイルエラーになります。
+
+## Stream API（宣言的なデータ処理）
+
+ループを書かずに「何をしたいか」を表現します。
+
+\`\`\`java
+import java.util.*;
+import java.util.stream.*;
+
+List<Integer> nums = List.of(1, 2, 3, 4, 5);
+int sum = nums.stream()
+              .filter(n -> n % 2 == 0)   // 偶数だけ
+              .mapToInt(n -> n * 10)      // 10倍
+              .sum();                     // 合計
+// (2*10) + (4*10) = 60
+\`\`\`
+
+- \`filter\` … 条件で絞る（JSと同じ発想）
+- \`map\` / \`mapToInt\` … 変換
+- \`collect(Collectors.toList())\` … 結果をリストに
+- \`sum\` / \`count\` / \`reduce\` … 集約
+
+## ラムダ式とメソッド参照
+
+\`n -> n * 10\` がラムダ式（JSのアロー関数に相当）。\`User::getName\` のようなメソッド参照も使えます。
+
+:::tip
+Stream は「中間操作（filter/map）」を重ねて「終端操作（sum/collect）」で実行されます。JSの配列メソッドチェーンとそっくり。言語が変わっても考え方は共通です。
+:::
+`,
+      quiz: [
+        {
+          q: "`List<String>` の `<String>` のように型をパラメータ化する仕組みは？",
+          choices: ["ジェネリクス", "アノテーション", "インターフェース"],
+          answer: 0,
+          explain: "ジェネリクスです。型安全かつ再利用可能な部品を作れます。",
+        },
+        {
+          q: "次のStreamの結果は？\n```\nList.of(1,2,3,4).stream().filter(n -> n%2==0).mapToInt(n -> n).sum()\n```",
+          choices: ["10", "6", "4"],
+          answer: 1,
+          explain: "偶数 2 と 4 を合計して 6 です。",
+        },
+        {
+          q: "`n -> n * 10` のような短い無名関数をJavaで何という？",
+          choices: ["ラムダ式", "コンストラクタ", "ジェネリクス"],
+          answer: 0,
+          explain: "ラムダ式です。JavaScriptのアロー関数に相当します。",
+        },
+      ],
+    },
   ],
 };

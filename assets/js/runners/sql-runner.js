@@ -146,6 +146,20 @@ export function createSqlPlayground(spec, onSolved) {
   const checkBtn = wrap.querySelector(".act-check");
   if (checkBtn) {
     checkBtn.addEventListener("click", async () => {
+      // ソース要件チェック（指定のSQL構文で書かれているか）。requires/forbids = {pattern, hint}
+      const srcErrs = [];
+      for (const r of spec.requires || []) {
+        if (!new RegExp(r.pattern, r.flags || "i").test(editor.value)) srcErrs.push(r.hint || `必要な構文がありません: ${r.pattern}`);
+      }
+      for (const f of spec.forbids || []) {
+        if (new RegExp(f.pattern, f.flags || "i").test(editor.value)) srcErrs.push(f.hint || `この書き方は避けてください: ${f.pattern}`);
+      }
+      if (srcErrs.length) {
+        output.className = "pg-output";
+        output.innerHTML = `<span class="err">❌ もう一歩！<br>${srcErrs.map((e) => "・" + e).join("<br>")}</span>`;
+        return;
+      }
+
       const got = await exec(editor.value);
       if (!got) return;
       const want = await getDb().then((db) => db.exec(spec.expected));

@@ -50,6 +50,13 @@ SELECT name, city FROM users;
           spec: {
             starter: "-- products テーブルから name と price の列だけ取得してください\n",
             expected: "SELECT name, price FROM products;",
+            requires: [
+              { pattern: "\\bname\\b", hint: "name 列を選択しましょう。" },
+              { pattern: "\\bprice\\b", hint: "price 列を選択しましょう。" },
+            ],
+            forbids: [
+              { pattern: "\\*", hint: "SELECT * ではなく、必要な列(name, price)だけを指定しましょう。" },
+            ],
           },
         },
       ],
@@ -117,6 +124,10 @@ SELECT * FROM products ORDER BY price DESC LIMIT 3;
           spec: {
             starter: "-- users から city が '東京' かつ age が 30未満 の行を取得\n",
             expected: "SELECT * FROM users WHERE city = '東京' AND age < 30;",
+            requires: [
+              { pattern: "where", hint: "WHERE 句で条件を指定しましょう。" },
+              { pattern: "and", hint: "AND で2つの条件をつなげましょう。" },
+            ],
           },
         },
       ],
@@ -193,6 +204,10 @@ HAVING COUNT(*) >= 2;
           spec: {
             starter: "-- products をカテゴリ(category)ごとに、平均価格 AVG(price) を求めてください\n-- 列は category, AVG(price)\n",
             expected: "SELECT category, AVG(price) FROM products GROUP BY category;",
+            requires: [
+              { pattern: "group\\s+by", hint: "GROUP BY でカテゴリごとにグループ化しましょう。" },
+              { pattern: "avg", hint: "AVG() で平均を計算しましょう。" },
+            ],
           },
         },
       ],
@@ -269,6 +284,10 @@ JOIN products p ON o.product_id = p.id;`,
 -- 列は users.name, orders.product_id の順
 `,
             expected: "SELECT users.name, orders.product_id FROM orders JOIN users ON orders.user_id = users.id;",
+            requires: [
+              { pattern: "join", hint: "JOIN で orders と users を結合しましょう。" },
+              { pattern: "\\bon\\b", hint: "ON で結合条件（user_id = users.id）を指定しましょう。" },
+            ],
           },
         },
       ],
@@ -350,6 +369,10 @@ SELECT * FROM users WHERE id = 6;`,
 -- そのあと id=2 の行を SELECT で確認してください
 `,
             expected: "UPDATE products SET price = 3000 WHERE id = 2; SELECT * FROM products WHERE id = 2;",
+            requires: [
+              { pattern: "update", hint: "UPDATE 文で値を更新しましょう。" },
+              { pattern: "where", hint: "WHERE で対象を id=2 に限定しましょう（全行更新を防ぐため必須）。" },
+            ],
           },
         },
       ],
@@ -371,6 +394,180 @@ SELECT * FROM users WHERE id = 6;`,
           choices: ["インデックス", "トランザクション", "ビュー"],
           answer: 1,
           explain: "トランザクション(BEGIN〜COMMIT)で一連の処理を不可分にします。",
+        },
+      ],
+    },
+    {
+      id: "sql-6",
+      title: "サブクエリと集合演算",
+      level: 3,
+      duration: "16分",
+      body: `
+# サブクエリと集合演算
+
+上級では「クエリの中にクエリを書く」サブクエリで、複雑な問いに答えます。
+
+## サブクエリ（クエリの中のクエリ）
+
+「平均より高い商品」を求めるには、まず平均を求め、その結果を条件に使います。
+
+\`\`\`sql
+SELECT name, price FROM products
+WHERE price > (SELECT AVG(price) FROM products);
+\`\`\`
+
+## IN を使ったサブクエリ
+
+「一度でも注文された商品」を求める：
+
+\`\`\`sql
+SELECT name FROM products
+WHERE id IN (SELECT product_id FROM orders);
+\`\`\`
+
+## 相関サブクエリ
+
+外側の行ごとに内側を評価します。「自分のカテゴリの平均より高い商品」など。
+
+\`\`\`sql
+SELECT name, category, price FROM products p
+WHERE price > (
+  SELECT AVG(price) FROM products WHERE category = p.category
+);
+\`\`\`
+
+## NOT IN / EXISTS
+
+「一度も注文していないユーザー」：
+
+\`\`\`sql
+SELECT name FROM users
+WHERE id NOT IN (SELECT user_id FROM orders);
+\`\`\`
+
+:::tip
+サブクエリは強力ですが、JOINで書ける場合はJOINの方が速いことが多いです。「読みやすさ」と「速度」のバランスを意識しましょう（次レッスンのインデックスにもつながります）。
+:::
+`,
+      exercises: [
+        {
+          type: "sql",
+          label: "▶ 平均より高い商品",
+          spec: { starter: "SELECT name, price FROM products\nWHERE price > (SELECT AVG(price) FROM products);" },
+        },
+        {
+          type: "sql",
+          label: "✏️ 練習: 一度も注文されていない商品",
+          spec: {
+            starter: "-- products のうち、orders に一度も現れない商品の name を取得してください\n-- ヒント: WHERE id NOT IN (SELECT ... FROM orders)\n",
+            expected: "SELECT name FROM products WHERE id NOT IN (SELECT product_id FROM orders);",
+            requires: [
+              { pattern: "select[\\s\\S]*select", hint: "サブクエリ（SELECTの中のSELECT）を使いましょう。" },
+              { pattern: "not\\s+in", hint: "NOT IN で「含まれないもの」を表現しましょう。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "「全体の平均より高い行」を1つのクエリで求めるのに使うのは？",
+          choices: ["サブクエリ", "INSERT", "LIMIT"],
+          answer: 0,
+          explain: "WHERE price > (SELECT AVG(price) ...) のようにサブクエリを使います。",
+        },
+        {
+          q: "外側の行ごとに内側を評価するサブクエリを何という？",
+          choices: ["相関サブクエリ", "集約関数", "ビュー"],
+          answer: 0,
+          explain: "外側の値を参照するものを相関サブクエリと呼びます。",
+        },
+      ],
+    },
+    {
+      id: "sql-7",
+      title: "インデックス・正規化・実行計画",
+      level: 3,
+      duration: "15分",
+      body: `
+# インデックス・正規化・実行計画
+
+データが増えても速いシステムを作るための、データベース設計の核心です。
+
+## インデックス（索引）
+
+本の索引と同じで、特定の列の検索を高速化します。
+
+\`\`\`sql
+CREATE INDEX idx_users_city ON users(city);
+\`\`\`
+
+- \`WHERE city = '東京'\` のような検索が劇的に速くなる
+- ただし**書き込みは少し遅くなり、容量も増える**ため貼りすぎ注意
+- よく検索/結合する列（外部キーなど）に貼るのが定石
+
+## 実行計画を見る
+
+クエリがインデックスを使っているか確認できます。
+
+\`\`\`sql
+EXPLAIN QUERY PLAN
+SELECT * FROM users WHERE city = '東京';
+\`\`\`
+
+\`SEARCH ... USING INDEX\` と出ればインデックスが効いています（\`SCAN\` は全件走査）。
+
+## 正規化（おさらい＋一歩先）
+
+- **第1正規形**: 1つのセルに複数値を入れない
+- **第2・第3正規形**: 重複・部分的な依存を排除
+- 目的は「1つの事実は1か所」。更新時の不整合を防ぐ
+
+## 非正規化という選択
+
+読み取りが極端に多い場合、あえて重複を持たせて高速化することも（トレードオフ）。
+「正しさ」と「速さ」のどちらを優先するか、設計判断が問われます。
+
+:::warn
+インデックスは万能薬ではありません。小さなテーブルでは効果が薄く、むしろオーバーヘッドに。**計測してから貼る**のが鉄則です。
+:::
+`,
+      exercises: [
+        {
+          type: "sql",
+          label: "▶ 実行計画を確認する",
+          spec: { starter: "EXPLAIN QUERY PLAN\nSELECT * FROM users WHERE city = '東京';" },
+        },
+        {
+          type: "sql",
+          label: "✏️ 練習: インデックスを作る",
+          spec: {
+            starter: "-- orders テーブルの user_id 列にインデックス idx_orders_user を作成してください\n",
+            expected: "CREATE INDEX idx_orders_user ON orders(user_id);",
+            requires: [
+              { pattern: "create\\s+index", hint: "CREATE INDEX でインデックスを作成します。" },
+              { pattern: "user_id", hint: "対象は orders(user_id) です。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "特定の列の検索を高速化する仕組みは？",
+          choices: ["インデックス", "トリガー", "ビュー"],
+          answer: 0,
+          explain: "インデックス（索引）が検索を高速化します。",
+        },
+        {
+          q: "インデックスのデメリットとして正しいのは？",
+          choices: ["検索が遅くなる", "書き込みが遅くなり容量も増える", "データが消える"],
+          answer: 1,
+          explain: "読み取りは速くなりますが、書き込みコストと容量が増えます。貼りすぎ注意です。",
+        },
+        {
+          q: "クエリがインデックスを使っているか調べるには？",
+          choices: ["EXPLAIN QUERY PLAN", "DELETE", "COUNT"],
+          answer: 0,
+          explain: "EXPLAIN QUERY PLAN で実行計画を確認できます。",
         },
       ],
     },
