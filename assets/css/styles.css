@@ -272,8 +272,26 @@ a:hover { text-decoration: underline; }
 .tc-no { font-size: 11px; color: var(--text-dim); }
 .tc-title { font-weight: 700; font-size: 15.5px; margin-bottom: 6px; }
 .tc-body { font-size: 13.5px; color: var(--text-dim); line-height: 1.7; }
+.trivia-card { cursor: pointer; transition: transform .12s ease, border-color .12s ease; }
+.trivia-card:hover { transform: translateY(-2px); border-color: var(--accent2); }
+.trivia-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tc-more { margin-top: 10px; font-size: 12px; color: var(--accent); }
 .trivia-card.flash { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(124,92,255,.3); animation: flashpop .5s ease; }
 @keyframes flashpop { from { transform: scale(.96); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+
+/* 小話モーダル */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 200; overflow-y: auto; opacity: 0; transition: opacity .2s ease; }
+.modal-overlay.show { opacity: 1; }
+.modal { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; max-width: 680px; width: 100%; padding: 28px 30px 32px; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.5); transform: translateY(8px); transition: transform .2s ease; }
+.modal-overlay.show .modal { transform: translateY(0); }
+.modal-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-dim); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 8px; border-radius: 8px; }
+.modal-close:hover { background: var(--bg-elev2); color: var(--text); }
+.modal-cat { font-size: 12px; font-weight: 700; color: var(--accent2); }
+.modal-title { font-size: 23px; margin: 6px 0 12px; }
+.modal-lead { font-size: 15px; color: var(--text); background: var(--bg-elev2); border-left: 3px solid var(--accent2); padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 8px; }
+.modal-detail { font-size: 14.5px; }
+.modal-detail p { color: var(--text); }
+.modal-detail strong { color: var(--accent); }
 
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-elev2); border: 1px solid var(--accent); color: var(--text); padding: 12px 22px; border-radius: 999px; opacity: 0; transition: all .3s ease; z-index: 100; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
