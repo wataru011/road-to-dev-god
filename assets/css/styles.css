@@ -251,6 +251,30 @@ a:hover { text-decoration: underline; }
 .badge .b-name { font-size: 12px; font-weight: 700; margin-top: 4px; }
 .badge .b-desc { font-size: 11px; color: var(--text-dim); }
 
+/* ---------- 面白小話 ---------- */
+.trivia-today { display: block; background: linear-gradient(135deg, rgba(124,92,255,.12), rgba(88,166,255,.10)); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; color: var(--text); }
+.trivia-today:hover { border-color: var(--accent2); text-decoration: none; transform: translateY(-2px); transition: transform .15s ease, border-color .15s ease; }
+.tt-cat { font-size: 12px; color: var(--accent2); font-weight: 700; }
+.tt-title { font-size: 18px; font-weight: 700; margin: 4px 0 6px; }
+.tt-body { color: var(--text-dim); font-size: 14px; }
+.tt-more { margin-top: 10px; font-size: 13px; color: var(--accent); }
+
+.trivia-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0 18px; }
+.trivia-cats { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip-btn { cursor: pointer; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text-dim); padding: 5px 12px; border-radius: 999px; font-size: 13px; font-family: var(--sans); }
+.chip-btn:hover { color: var(--text); border-color: var(--accent); }
+.chip-btn.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+
+.trivia-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.trivia-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.trivia-card .tc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.tc-cat { font-size: 12px; font-weight: 700; color: var(--accent2); }
+.tc-no { font-size: 11px; color: var(--text-dim); }
+.tc-title { font-weight: 700; font-size: 15.5px; margin-bottom: 6px; }
+.tc-body { font-size: 13.5px; color: var(--text-dim); line-height: 1.7; }
+.trivia-card.flash { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(124,92,255,.3); animation: flashpop .5s ease; }
+@keyframes flashpop { from { transform: scale(.96); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-elev2); border: 1px solid var(--accent); color: var(--text); padding: 12px 22px; border-radius: 999px; opacity: 0; transition: all .3s ease; z-index: 100; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 

@@ -5,8 +5,16 @@ import { createJsPlayground } from "./runners/js-runner.js";
 import { createSqlPlayground } from "./runners/sql-runner.js";
 import { createHtmlPlayground } from "./runners/html-runner.js";
 import { createQuiz } from "./runners/quiz.js";
+import { trivia, TRIVIA_CATEGORIES } from "./data/trivia.js";
 
 const app = document.getElementById("app");
+
+const CAT_ICON = { 語源: "📖", 歴史: "📜", 障害: "💥", 人物: "👤", 法則: "⚖️", 文化: "🎭", 豆知識: "💡" };
+// 日替わりの小話（日付ベースで決まる擬似ランダム。Date.now ではなく日単位で安定）
+function pickDailyTrivia() {
+  const day = Math.floor(Date.now() / 86400000);
+  return trivia[day % trivia.length];
+}
 const LEVEL_BY_N = Object.fromEntries(LEVELS.map((l) => [l.n, l]));
 
 function levelChip(n) {
@@ -39,6 +47,9 @@ function renderHeader() {
     if (route.name === "level" && route.levelId === lv.id) a.classList.add("active");
     nav.appendChild(a);
   }
+  const tv = link("#/trivia", "📖 小話");
+  if (route.name === "trivia") tv.classList.add("active");
+  nav.appendChild(tv);
   updateRank();
 }
 
@@ -75,6 +86,7 @@ function parseHash() {
   }
   if (parts[0] === "course") return { name: "course", courseId: parts[1] };
   if (parts[0] === "level") return { name: "level", levelId: parts[1] };
+  if (parts[0] === "trivia") return { name: "trivia" };
   return { name: "home" };
 }
 
@@ -84,6 +96,7 @@ function router() {
   if (route.name === "course") renderCourse(route.courseId);
   else if (route.name === "lesson") renderLesson(route.courseId, route.lessonId);
   else if (route.name === "level") renderLevel(route.levelId);
+  else if (route.name === "trivia") renderTrivia();
   else renderHome();
   renderHeader();
 }
@@ -113,6 +126,9 @@ function renderHome() {
 
     <h2 class="section-title">📚 言語別トラック（横断して学ぶ）</h2>
     <div class="course-grid" id="course-grid"></div>
+
+    <h2 class="section-title">📖 今日の小話</h2>
+    <a class="trivia-today" href="#/trivia" id="trivia-today"></a>
 
     <h2 class="section-title">🏆 獲得バッジ</h2>
     <div class="badge-row" id="badge-row"></div>
@@ -166,6 +182,14 @@ function renderHome() {
     `;
     grid.appendChild(card);
   });
+
+  const t = pickDailyTrivia();
+  const today = el.querySelector("#trivia-today");
+  today.innerHTML = `
+    <div class="tt-cat">${CAT_ICON[t.cat] || "📖"} ${t.cat}</div>
+    <div class="tt-title">${t.title}</div>
+    <div class="tt-body">${t.body}</div>
+    <div class="tt-more">小話一覧を見る（全${trivia.length}本）→</div>`;
 
   const badgeRow = el.querySelector("#badge-row");
   P.computeBadges(courses).forEach((b) => {
@@ -244,6 +268,59 @@ function renderLevel(levelId) {
     <div>${nextLv ? `<a class="btn primary" href="#/level/${nextLv.id}">${nextLv.icon} ${nextLv.title} →</a>` : `<span class="muted">最終レベル 🎉</span>`}</div>
   `;
   el.appendChild(nav);
+
+  app.innerHTML = "";
+  app.appendChild(el);
+}
+
+/* ---------------- 面白小話 ---------------- */
+let triviaFilter = "すべて";
+function renderTrivia() {
+  const el = document.createElement("div");
+  el.innerHTML = `
+    <div class="breadcrumb"><a href="#/">ホーム</a> › 面白小話</div>
+    <div class="course-head"><div class="c-icon">📖</div>
+      <div><h1>システム開発 面白小話</h1>
+      <div class="muted">学びの息抜きに。全${trivia.length}本の豆知識・歴史・伝説</div></div>
+    </div>
+    <div class="trivia-controls">
+      <div class="trivia-cats" id="trivia-cats"></div>
+      <button class="btn primary" id="trivia-random">🎲 ランダムに1本</button>
+    </div>
+    <div id="trivia-list" class="trivia-grid"></div>
+  `;
+
+  const cats = el.querySelector("#trivia-cats");
+  TRIVIA_CATEGORIES.forEach((c) => {
+    const b = document.createElement("button");
+    b.className = "chip-btn" + (c === triviaFilter ? " active" : "");
+    b.textContent = c === "すべて" ? "すべて" : `${CAT_ICON[c] || ""} ${c}`;
+    b.addEventListener("click", () => { triviaFilter = c; renderTrivia(); });
+    cats.appendChild(b);
+  });
+
+  const list = el.querySelector("#trivia-list");
+  const draw = (items, highlightId) => {
+    list.innerHTML = "";
+    items.forEach((t) => {
+      const card = document.createElement("div");
+      card.className = "trivia-card" + (t.id === highlightId ? " flash" : "");
+      card.innerHTML = `
+        <div class="tc-head"><span class="tc-cat">${CAT_ICON[t.cat] || "📖"} ${t.cat}</span><span class="tc-no">#${t.id}</span></div>
+        <div class="tc-title">${t.title}</div>
+        <div class="tc-body">${t.body}</div>`;
+      list.appendChild(card);
+    });
+  };
+
+  const filtered = triviaFilter === "すべて" ? trivia : trivia.filter((t) => t.cat === triviaFilter);
+  draw(filtered);
+
+  el.querySelector("#trivia-random").addEventListener("click", () => {
+    const pick = filtered[Math.floor(Math.random() * filtered.length)];
+    draw([pick], pick.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 
   app.innerHTML = "";
   app.appendChild(el);
