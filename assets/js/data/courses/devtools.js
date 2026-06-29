@@ -291,5 +291,153 @@ npm run build            # スクリプト実行（ビルドなど）
         },
       ],
     },
+    {
+      id: "dt-6",
+      title: "読みやすいコードを書く ― 命名・関数・クリーンコード",
+      level: 2,
+      duration: "16分",
+      body: `
+# 読みやすいコードを書く ― 命名・関数・クリーンコード
+
+コードは「書く時間」より「**読まれる時間**」のほうがずっと長いものです。半年後の自分や、チームの誰かが必ず読みます。読みやすいコードは**保守性(変更のしやすさ)**を高め、バグを減らします。動けばよいのではなく、**読めてこそ良いコード**です。
+
+## 1. 意味のある名前をつける
+
+名前を見ただけで「何者か」が分かるようにします。
+
+\`\`\`javascript
+// ❌ 何のことか分からない
+let d = 86400;
+function f(a, b) { return a * b; }
+
+// ✅ 名前が説明してくれる
+const SECONDS_PER_DAY = 86400;
+function calcTotalPrice(unitPrice, quantity) {
+  return unitPrice * quantity;
+}
+\`\`\`
+
+- 真偽値は \`isActive\` \`hasError\` のように is/has で始める
+- \`tmp\` \`data1\` \`a\` のような中身の分からない名前を避ける
+- 略しすぎない（\`usr\` より \`user\`）。ただし慣用的な短縮(\`id\`,\`i\`)はOK
+
+## 2. 関数は小さく、1つの仕事だけ
+
+1つの関数が「あれもこれも」やると、読むのも直すのも大変。**画面に収まる長さ**を目安に、1関数1責任を心がけます。
+
+\`\`\`javascript
+// ❌ 計算も表示も保存も1つの関数で
+function process(order) { /* 検証・計算・DB保存・メール送信... 100行 */ }
+
+// ✅ 小さく分けて名前で意図を表す
+function validate(order) { ... }
+function calcTotal(order) { ... }
+function save(order) { ... }
+\`\`\`
+
+名前の付いた小さな関数の集まりは、それ自体がドキュメントになります。
+
+## 3. マジックナンバーをなくす
+
+意味不明な数値リテラルは、名前付きの定数にします。
+
+\`\`\`javascript
+if (age >= 18) {}          // ❌ 18って何？
+const ADULT_AGE = 18;
+if (age >= ADULT_AGE) {}   // ✅ 意図が明確
+\`\`\`
+
+## 4. ネストを浅く（早期リターン）
+
+\`\`\`javascript
+// ❌ 深いネスト
+function f(u){ if(u){ if(u.active){ return u.name; } } }
+// ✅ ガード節で早く返す
+function f(u){ if(!u || !u.active) return null; return u.name; }
+\`\`\`
+
+## 5. コメントは「なぜ」を書く
+
+「何をしているか」はコードで語らせ、コメントには**そうした理由**を書きます。コメントアウトした死んだコードは消す(履歴はGitが覚えている)。
+
+## 6. 一貫性を保つ
+
+命名規則やインデントを揃えると、それだけで読みやすくなります。**Prettier**などの自動整形ツールを使えば、書式の議論に時間を使わずに済みます。
+
+:::tip
+合言葉は「3か月後の自分が読んでもすぐ分かるか？」。読みやすさは思いやりであり、未来の保守コストを下げる投資です。これは神レベルの設計原則(SOLID/DRY)の土台にもなります。
+:::
+`,
+      exercises: [
+        {
+          type: "js",
+          label: "▶ 同じ動作でも読みやすさは段違い",
+          spec: {
+            starter: `// 下の2つは「税込み価格」を計算する同じ処理。動作は同じでも読みやすさが違う。
+// ❌ 読みにくい
+function c(p){ return Math.floor(p*1.1); }
+// ✅ 読みやすい
+const TAX_RATE = 1.1;
+function priceWithTax(price) {
+  return Math.floor(price * TAX_RATE);
+}
+console.log(c(100), priceWithTax(100)); // どちらも 110`,
+          },
+        },
+        {
+          type: "js",
+          label: "✏️ 読みやすく書き換える",
+          spec: {
+            starter: `// この関数は「有効な明細(active)だけの金額合計」を計算しています。
+// 何をしているか分かりにくいので、意味の分かる名前に書き換えて、
+// 同じ動作をする関数 totalAmount(items) を完成させてください。
+// items の各要素は { active: 真偽, price: 単価, qty: 数量 }
+
+// 参考(読みにくい元コード):
+// function f(a){let x=0;for(let i=0;i<a.length;i++){if(a[i].s)x+=a[i].p*a[i].q;}return x;}
+
+function totalAmount(items) {
+  // ここに読みやすく書く
+}`,
+            tests: [
+              { call: "totalAmount([{active:true,price:100,qty:2},{active:false,price:50,qty:1}])", expect: 200 },
+              { call: "totalAmount([{active:true,price:300,qty:1},{active:true,price:50,qty:3}])", expect: 450 },
+              { call: "totalAmount([{active:false,price:100,qty:2}])", expect: 0 },
+              { call: "totalAmount([])", expect: 0 },
+            ],
+            requires: [
+              { pattern: "function\\s+totalAmount|totalAmount\\s*=", hint: "totalAmount という関数を定義しましょう。" },
+              { pattern: "active", hint: "active が true の明細だけを合計しましょう。" },
+            ],
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "変数名として最も良いのはどれ？",
+          choices: ["unitPrice", "x1", "tmp"],
+          answer: 0,
+          explain: "名前から中身が分かる unitPrice が最良。x1 や tmp は意図が伝わりません。",
+        },
+        {
+          q: "関数を「小さく1つの責任」に保つ主な利点は？",
+          choices: ["読みやすく、テスト・修正がしやすい", "実行速度が必ず上がる", "ファイル数が減る"],
+          answer: 0,
+          explain: "小さな単一責任の関数は理解・テスト・変更が容易になり、保守性が上がります。",
+        },
+        {
+          q: "コード中の意味不明な数値リテラル(マジックナンバー)への対処は？",
+          choices: ["意味のある名前の定数にする", "コメントを大量に書く", "そのままにする"],
+          answer: 0,
+          explain: "名前付き定数にすると意図が明確になり、変更も一箇所で済みます。",
+        },
+        {
+          q: "コメントに書くべき内容として最も適切なのは？",
+          choices: ["なぜそうするのか(理由・背景)", "コードを1行ずつ日本語に訳したもの", "コメントアウトした古いコード"],
+          answer: 0,
+          explain: "「何を」はコードで語らせ、コメントには「なぜ」を書きます。死んだコードはGit履歴に任せて消します。",
+        },
+      ],
+    },
   ],
 };
