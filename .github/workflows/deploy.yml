@@ -30,6 +30,17 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # キャッシュ無効化: アセットURLのプレースホルダ __BUILD_ID__ を
+      # コミットSHA(短縮)に置換し、デプロイごとにユニークなクエリ文字列にする
+      - name: Inject cache-busting build id
+        run: |
+          BUILD_ID="${GITHUB_SHA::12}"
+          echo "Build id: $BUILD_ID"
+          grep -rl --include='*.html' --include='*.js' '__BUILD_ID__' . \
+            | grep -v '/.git/' \
+            | xargs -r sed -i "s/__BUILD_ID__/${BUILD_ID}/g"
+          echo "Remaining placeholders: $(grep -rl '__BUILD_ID__' . --include='*.html' --include='*.js' | grep -v '/.git/' | wc -l)"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
