@@ -57,11 +57,18 @@ console.log(\`\${name}さんは\${age}歳です\`);`,
           type: "js",
           label: "✏️ 練習問題",
           spec: {
-            starter: `// city という定数に "東京" を入れて、
-// "私は東京に住んでいます" と出力してください
-const city = "";
-console.log();`,
+            starter: `// city という変数に "東京" を代入し、
+// テンプレートリテラルを使って "私は東京に住んでいます" と出力してください。
+// （答えの文を直接書くのではなく、変数 city を埋め込んで組み立てましょう）
+`,
             expected: "私は東京に住んでいます",
+            requires: [
+              { pattern: "\\bcity\\b", hint: "city という変数を作って使いましょう。" },
+              { pattern: "\\$\\{\\s*city\\s*\\}", hint: "テンプレートリテラルの `${city}` で変数を埋め込みましょう。" },
+            ],
+            forbids: [
+              { pattern: "私は東京に住んでいます", hint: "完成した文章をそのまま書かないでください。変数 city を使って組み立てましょう。" },
+            ],
           },
         },
       ],
@@ -133,12 +140,27 @@ for (const fruit of ["りんご", "みかん"]) {
           type: "js",
           label: "✏️ FizzBuzz に挑戦",
           spec: {
-            starter: `// 1から15まで出力。ただし
-// 3の倍数は "Fizz"、5の倍数は "Buzz"、両方なら "FizzBuzz"
-for (let i = 1; i <= 15; i++) {
+            starter: `// 数 n を受け取り、次のルールで値を返す関数 fizzbuzz(n) を作ってください。
+//  ・3の倍数なら文字列 "Fizz"
+//  ・5の倍数なら文字列 "Buzz"
+//  ・3と5の両方の倍数なら "FizzBuzz"
+//  ・それ以外は数値 n をそのまま返す
+// （いろいろな n でテストされるので、決め打ちでは通りません）
+function fizzbuzz(n) {
   // ここに書く
 }`,
-            expected: "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz",
+            tests: [
+              { call: "fizzbuzz(1)", expect: 1 },
+              { call: "fizzbuzz(3)", expect: "Fizz" },
+              { call: "fizzbuzz(5)", expect: "Buzz" },
+              { call: "fizzbuzz(15)", expect: "FizzBuzz" },
+              { call: "fizzbuzz(7)", expect: 7 },
+              { call: "fizzbuzz(30)", expect: "FizzBuzz" },
+              { call: "fizzbuzz(9)", expect: "Fizz" },
+            ],
+            requires: [
+              { pattern: "%", hint: "剰余演算子 % を使って倍数かどうかを判定しましょう。" },
+            ],
           },
         },
       ],
@@ -197,13 +219,21 @@ const greet = (name) => \`こんにちは、\${name}さん\`;
           type: "js",
           label: "✏️ 関数を作る",
           spec: {
-            starter: `// 円の面積を返す関数 area(r) を作る（円周率は3.14）
-// area(10) を出力してください（期待値: 314）
+            starter: `// 半径 r を受け取り、円の面積を返す関数 area(r) を作ってください。
+// 円周率は 3.14 とします（面積 = 半径 × 半径 × 円周率）。
+// 複数の半径でテストされます。
 function area(r) {
   // ここに書く
-}
-console.log(area(10));`,
-            expected: "314",
+}`,
+            tests: [
+              { call: "area(10)", expect: 314 },
+              { call: "area(2)", expect: 12.56 },
+              { call: "area(0)", expect: 0 },
+            ],
+            requires: [
+              { pattern: "3\\.14", hint: "円周率 3.14 を使って計算しましょう。" },
+              { pattern: "\\br\\b", hint: "引数 r を使って計算しましょう。" },
+            ],
           },
         },
       ],
@@ -272,16 +302,22 @@ const names = users.map(u => u.name); // ["太郎","花子"]
           type: "js",
           label: "✏️ map と filter",
           spec: {
-            starter: `const users = [
-  { name: "太郎", age: 28 },
-  { name: "花子", age: 34 },
-  { name: "健", age: 22 },
-];
-// 30歳以上のユーザーの名前だけを配列で出力してください
-// 期待値: ["花子"]
-const result = users; // ←ここを書き換える
-console.log(result);`,
-            expected: '["花子"]',
+            starter: `// ユーザーの配列 list を受け取り、
+// 30歳以上の人の名前だけを配列にして返す関数 adults(list) を作ってください。
+// 例: adults([{name:"太郎",age:28},{name:"花子",age:34}]) → ["花子"]
+function adults(list) {
+  // ここに書く（filter で絞り込み、map で名前を取り出す）
+}`,
+            tests: [
+              { call: 'adults([{name:"太郎",age:28},{name:"花子",age:34},{name:"健",age:22}])', expect: ["花子"] },
+              { call: 'adults([{name:"翔",age:30},{name:"涼",age:19}])', expect: ["翔"] },
+              { call: 'adults([{name:"美咲",age:41},{name:"健",age:50}])', expect: ["美咲", "健"] },
+              { call: "adults([])", expect: [] },
+            ],
+            requires: [
+              { pattern: "filter", hint: "filter で30歳以上の人を絞り込みましょう。" },
+              { pattern: "map", hint: "map で名前(name)だけを取り出しましょう。" },
+            ],
           },
         },
       ],

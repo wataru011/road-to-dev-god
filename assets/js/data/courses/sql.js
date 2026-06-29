@@ -50,6 +50,13 @@ SELECT name, city FROM users;
           spec: {
             starter: "-- products テーブルから name と price の列だけ取得してください\n",
             expected: "SELECT name, price FROM products;",
+            requires: [
+              { pattern: "\\bname\\b", hint: "name 列を選択しましょう。" },
+              { pattern: "\\bprice\\b", hint: "price 列を選択しましょう。" },
+            ],
+            forbids: [
+              { pattern: "\\*", hint: "SELECT * ではなく、必要な列(name, price)だけを指定しましょう。" },
+            ],
           },
         },
       ],
@@ -117,6 +124,10 @@ SELECT * FROM products ORDER BY price DESC LIMIT 3;
           spec: {
             starter: "-- users から city が '東京' かつ age が 30未満 の行を取得\n",
             expected: "SELECT * FROM users WHERE city = '東京' AND age < 30;",
+            requires: [
+              { pattern: "where", hint: "WHERE 句で条件を指定しましょう。" },
+              { pattern: "and", hint: "AND で2つの条件をつなげましょう。" },
+            ],
           },
         },
       ],
@@ -193,6 +204,10 @@ HAVING COUNT(*) >= 2;
           spec: {
             starter: "-- products をカテゴリ(category)ごとに、平均価格 AVG(price) を求めてください\n-- 列は category, AVG(price)\n",
             expected: "SELECT category, AVG(price) FROM products GROUP BY category;",
+            requires: [
+              { pattern: "group\\s+by", hint: "GROUP BY でカテゴリごとにグループ化しましょう。" },
+              { pattern: "avg", hint: "AVG() で平均を計算しましょう。" },
+            ],
           },
         },
       ],
@@ -269,6 +284,10 @@ JOIN products p ON o.product_id = p.id;`,
 -- 列は users.name, orders.product_id の順
 `,
             expected: "SELECT users.name, orders.product_id FROM orders JOIN users ON orders.user_id = users.id;",
+            requires: [
+              { pattern: "join", hint: "JOIN で orders と users を結合しましょう。" },
+              { pattern: "\\bon\\b", hint: "ON で結合条件（user_id = users.id）を指定しましょう。" },
+            ],
           },
         },
       ],
@@ -350,6 +369,10 @@ SELECT * FROM users WHERE id = 6;`,
 -- そのあと id=2 の行を SELECT で確認してください
 `,
             expected: "UPDATE products SET price = 3000 WHERE id = 2; SELECT * FROM products WHERE id = 2;",
+            requires: [
+              { pattern: "update", hint: "UPDATE 文で値を更新しましょう。" },
+              { pattern: "where", hint: "WHERE で対象を id=2 に限定しましょう（全行更新を防ぐため必須）。" },
+            ],
           },
         },
       ],
