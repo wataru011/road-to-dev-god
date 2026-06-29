@@ -1,4 +1,4 @@
-import { courses, getCourse, getLesson } from "./data/curriculum.js";
+import { courses, LEVELS, getLevel, getCourse, getLesson, lessonsForLevel } from "./data/curriculum.js";
 import { renderMarkdown } from "./markdown.js";
 import * as P from "./progress.js";
 import { createJsPlayground } from "./runners/js-runner.js";
@@ -6,6 +6,24 @@ import { createSqlPlayground } from "./runners/sql-runner.js";
 import { createQuiz } from "./runners/quiz.js";
 
 const app = document.getElementById("app");
+const LEVEL_BY_N = Object.fromEntries(LEVELS.map((l) => [l.n, l]));
+
+function levelChip(n) {
+  const lv = LEVEL_BY_N[n];
+  if (!lv) return "";
+  return `<span class="lvl-chip lvl-${n}">${lv.icon} ${lv.title}</span>`;
+}
+
+function levelProgress(n) {
+  let total = 0, done = 0;
+  for (const sec of lessonsForLevel(n)) {
+    for (const l of sec.lessons) {
+      total++;
+      if (P.isLessonDone(l.id)) done++;
+    }
+  }
+  return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
+}
 
 /* ---------------- ヘッダー（ナビ + ランク） ---------------- */
 function renderHeader() {
@@ -15,9 +33,9 @@ function renderHeader() {
   const home = link("#/", "ホーム");
   if (route.name === "home") home.classList.add("active");
   nav.appendChild(home);
-  for (const c of courses) {
-    const a = link(`#/course/${c.id}`, `${c.icon} ${c.title}`);
-    if (route.name !== "home" && route.courseId === c.id) a.classList.add("active");
+  for (const lv of LEVELS) {
+    const a = link(`#/level/${lv.id}`, `${lv.icon} ${lv.title}`);
+    if (route.name === "level" && route.levelId === lv.id) a.classList.add("active");
     nav.appendChild(a);
   }
   updateRank();
@@ -50,11 +68,12 @@ function link(href, text) {
 /* ---------------- ルーティング ---------------- */
 function parseHash() {
   const h = location.hash.replace(/^#/, "") || "/";
-  const parts = h.split("/").filter(Boolean); // e.g. ["course","javascript","lesson","js-1"]
+  const parts = h.split("/").filter(Boolean);
   if (parts[0] === "course" && parts[2] === "lesson") {
     return { name: "lesson", courseId: parts[1], lessonId: parts[3] };
   }
   if (parts[0] === "course") return { name: "course", courseId: parts[1] };
+  if (parts[0] === "level") return { name: "level", levelId: parts[1] };
   return { name: "home" };
 }
 
@@ -63,6 +82,7 @@ function router() {
   window.scrollTo(0, 0);
   if (route.name === "course") renderCourse(route.courseId);
   else if (route.name === "lesson") renderLesson(route.courseId, route.lessonId);
+  else if (route.name === "level") renderLevel(route.levelId);
   else renderHome();
   renderHeader();
 }
@@ -77,17 +97,20 @@ function renderHome() {
   el.innerHTML = `
     <section class="hero">
       <h1>新人を、<span class="grad">システム開発の神</span>へ。</h1>
-      <p>Webシステム開発に必要なすべてを、ブラウザだけで学べる学習プラットフォーム。
+      <p>初級編から神レベルまで、段階的にレベルアップする学習の道。
          <strong>JavaScript</strong> ・ <strong>SQL</strong> は実際に実行、<strong>Java</strong> はコード読解と演習で身につけます。</p>
       <div class="hero-stats">
-        <div class="hero-stat"><div class="num">${courses.length}</div><div class="lbl">コース</div></div>
+        <div class="hero-stat"><div class="num">${LEVELS.length}</div><div class="lbl">レベル</div></div>
         <div class="hero-stat"><div class="num">${totalLessons}</div><div class="lbl">レッスン</div></div>
         <div class="hero-stat"><div class="num">${tp.pct}%</div><div class="lbl">あなたの達成度</div></div>
         <div class="hero-stat"><div class="num">${rank.icon}</div><div class="lbl">${rank.title}</div></div>
       </div>
     </section>
 
-    <h2 class="section-title">📚 コース一覧</h2>
+    <h2 class="section-title">🛤️ 神への道 ― 4段階で実力を上げる</h2>
+    <div class="level-grid" id="level-grid"></div>
+
+    <h2 class="section-title">📚 言語別トラック（横断して学ぶ）</h2>
     <div class="course-grid" id="course-grid"></div>
 
     <h2 class="section-title">🏆 獲得バッジ</h2>
@@ -99,6 +122,34 @@ function renderHome() {
     </div>
   `;
 
+  // レベルの道（4段階）
+  const lgrid = el.querySelector("#level-grid");
+  LEVELS.forEach((lv, i) => {
+    const pr = levelProgress(lv.n);
+    const card = document.createElement("a");
+    card.className = `level-card lvl-${lv.n}`;
+    card.href = `#/level/${lv.id}`;
+    card.innerHTML = `
+      <div class="level-top">
+        <span class="level-icon">${lv.icon}</span>
+        <span class="level-step">Lv.${lv.n}</span>
+      </div>
+      <h3>${lv.title}</h3>
+      <div class="level-tagline">${lv.tagline}</div>
+      <p>${lv.desc}</p>
+      <div class="course-meta"><span>${pr.done}/${pr.total} 完了</span><span>${pr.pct}%</span></div>
+      <div class="mini-progress"><div style="width:${pr.pct}%"></div></div>
+    `;
+    lgrid.appendChild(card);
+    if (i < LEVELS.length - 1) {
+      const arrow = document.createElement("div");
+      arrow.className = "level-arrow";
+      arrow.textContent = "▶";
+      lgrid.appendChild(arrow);
+    }
+  });
+
+  // 言語別トラック
   const grid = el.querySelector("#course-grid");
   courses.forEach((c) => {
     const pr = P.courseProgress(c);
@@ -135,6 +186,68 @@ function renderHome() {
   app.appendChild(el);
 }
 
+/* ---------------- レベル詳細 ---------------- */
+function renderLevel(levelId) {
+  const lv = getLevel(levelId);
+  if (!lv) return renderNotFound();
+  const sections = lessonsForLevel(lv.n);
+  const pr = levelProgress(lv.n);
+  const idx = LEVELS.findIndex((x) => x.id === lv.id);
+  const prevLv = LEVELS[idx - 1] || null;
+  const nextLv = LEVELS[idx + 1] || null;
+
+  const el = document.createElement("div");
+  el.innerHTML = `
+    <div class="breadcrumb"><a href="#/">ホーム</a> › ${lv.title}</div>
+    <div class="course-head"><div class="c-icon">${lv.icon}</div>
+      <div><h1>${lv.title} <span class="lvl-chip lvl-${lv.n}">Lv.${lv.n}</span></h1>
+      <div class="muted">${lv.tagline}</div></div>
+    </div>
+    <p class="course-desc">${lv.desc}</p>
+    <div class="flex-between" style="margin:18px 0">
+      <strong>進捗 ${pr.done}/${pr.total}</strong><span class="muted">${pr.pct}%</span>
+    </div>
+    <div class="mini-progress" style="margin-bottom:8px"><div style="width:${pr.pct}%"></div></div>
+    <div id="level-sections"></div>
+  `;
+
+  const wrap = el.querySelector("#level-sections");
+  sections.forEach((sec) => {
+    const block = document.createElement("div");
+    block.style.marginTop = "28px";
+    block.innerHTML = `<h2 class="section-title" style="margin-bottom:12px">${sec.course.icon} ${sec.course.title}</h2>`;
+    const list = document.createElement("ul");
+    list.className = "lesson-list";
+    sec.lessons.forEach((l) => {
+      const done = P.isLessonDone(l.id);
+      const a = document.createElement("a");
+      a.className = "lesson-item" + (done ? " done" : "");
+      a.href = `#/course/${sec.course.id}/lesson/${l.id}`;
+      a.innerHTML = `
+        <div class="lesson-num">${done ? "✓" : sec.course.icon}</div>
+        <div class="lesson-body"><div class="t">${l.title}</div><div class="d">⏱ ${l.duration}${l.quiz ? " ・ クイズあり" : ""}</div></div>
+        <div class="lesson-check">${done ? "✅" : ""}</div>
+      `;
+      list.appendChild(a);
+    });
+    block.appendChild(list);
+    wrap.appendChild(block);
+  });
+
+  // レベル間ナビ
+  const nav = document.createElement("div");
+  nav.className = "lesson-nav";
+  nav.innerHTML = `
+    <div>${prevLv ? `<a class="btn" href="#/level/${prevLv.id}">← ${prevLv.icon} ${prevLv.title}</a>` : ""}</div>
+    <div><a class="btn" href="#/">ホーム</a></div>
+    <div>${nextLv ? `<a class="btn primary" href="#/level/${nextLv.id}">${nextLv.icon} ${nextLv.title} →</a>` : `<span class="muted">最終レベル 🎉</span>`}</div>
+  `;
+  el.appendChild(nav);
+
+  app.innerHTML = "";
+  app.appendChild(el);
+}
+
 /* ---------------- コース詳細 ---------------- */
 function renderCourse(courseId) {
   const course = getCourse(courseId);
@@ -164,7 +277,7 @@ function renderCourse(courseId) {
     a.href = `#/course/${course.id}/lesson/${l.id}`;
     a.innerHTML = `
       <div class="lesson-num">${done ? "✓" : i + 1}</div>
-      <div class="lesson-body"><div class="t">${l.title}</div><div class="d">⏱ ${l.duration}${l.quiz ? " ・ クイズあり" : ""}</div></div>
+      <div class="lesson-body"><div class="t">${l.title} ${levelChip(l.level)}</div><div class="d">⏱ ${l.duration}${l.quiz ? " ・ クイズあり" : ""}</div></div>
       <div class="lesson-check">${done ? "✅" : ""}</div>
     `;
     list.appendChild(a);
@@ -185,7 +298,7 @@ function renderLesson(courseId, lessonId) {
 
   const head = document.createElement("div");
   head.innerHTML = `
-    <div class="breadcrumb"><a href="#/">ホーム</a> › <a href="#/course/${course.id}">${course.title}</a> › レッスン ${index + 1}</div>
+    <div class="breadcrumb"><a href="#/">ホーム</a> › <a href="#/course/${course.id}">${course.title}</a> › レッスン ${index + 1} ${levelChip(lesson.level)}</div>
   `;
   el.appendChild(head);
 
