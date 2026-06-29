@@ -505,5 +505,382 @@ Stream は「中間操作（filter/map）」を重ねて「終端操作（sum/co
         },
       ],
     },
+    {
+      id: "java-8",
+      title: "継承・インターフェース・ポリモーフィズム",
+      level: 2,
+      duration: "16分",
+      body: `
+# 継承・インターフェース・ポリモーフィズム
+
+オブジェクト指向の3本柱のうち、カプセル化に続く2つを学びます。
+
+## 継承（共通部分をまとめる）
+
+\`\`\`java
+class Animal {
+    String name;
+    Animal(String name) { this.name = name; }
+    String sound() { return "..."; }
+}
+
+class Dog extends Animal {
+    Dog(String name) { super(name); }
+    @Override
+    String sound() { return "ワン"; }
+}
+\`\`\`
+
+\`extends\` で親を継承し、\`@Override\` でメソッドを上書きします。
+
+## インターフェース（できることの契約）
+
+「何ができるか」だけを定義し、実装はクラスに任せます。
+
+\`\`\`java
+interface Greetable {
+    String greet();          // 実装は持たない（契約のみ）
+}
+
+class User implements Greetable {
+    public String greet() { return "こんにちは"; }
+}
+\`\`\`
+
+## ポリモーフィズム（多態性）
+
+同じ型として扱い、実際の中身に応じて振る舞いが変わります。
+
+\`\`\`java
+List<Animal> animals = List.of(new Dog("ポチ"), new Animal("謎"));
+for (Animal a : animals) {
+    System.out.println(a.sound());  // ポチは「ワン」、謎は「...」
+}
+\`\`\`
+
+:::tip
+インターフェースに依存して具体クラスに依存しない設計は、神レベルの「依存性逆転」につながります。差し替え・テストが容易になります。
+:::
+`,
+      quiz: [
+        {
+          q: "親クラスのメソッドを子クラスで上書きすることを何という？",
+          choices: ["オーバーライド", "オーバーロード", "キャスト"],
+          answer: 0,
+          explain: "オーバーライド(@Override)です。オーバーロードは同名で引数違いの定義です。",
+        },
+        {
+          q: "「できること（メソッドの契約）」だけを定義し実装はクラスに任せるのは？",
+          choices: ["インターフェース", "コンストラクタ", "フィールド"],
+          answer: 0,
+          explain: "インターフェースです。implements で実装を約束します。",
+        },
+        {
+          q: "同じ型として扱い、実体に応じて振る舞いが変わる性質は？",
+          choices: ["ポリモーフィズム", "カプセル化", "正規化"],
+          answer: 0,
+          explain: "ポリモーフィズム（多態性）です。",
+        },
+      ],
+    },
+    {
+      id: "java-9",
+      title: "ラムダ・関数型インターフェース・Optional",
+      level: 3,
+      duration: "15分",
+      body: `
+# ラムダ・関数型インターフェース・Optional
+
+モダンJavaの書き味。JavaScriptで学んだ関数の感覚がここで活きます。
+
+## ラムダ式
+
+メソッドが1つだけのインターフェース（関数型インターフェース）を、短く書けます。
+
+\`\`\`java
+Runnable r = () -> System.out.println("実行");
+Comparator<String> byLen = (a, b) -> a.length() - b.length();
+\`\`\`
+
+## 関数型インターフェース
+
+\`java.util.function\` の代表：
+
+- \`Function<T,R>\` … T を受け R を返す
+- \`Predicate<T>\` … T を受け boolean（条件）
+- \`Consumer<T>\` … T を受け何も返さない
+- \`Supplier<T>\` … 引数なしで T を返す
+
+\`\`\`java
+Predicate<Integer> isEven = n -> n % 2 == 0;
+System.out.println(isEven.test(4)); // true
+\`\`\`
+
+## Optional ― nullとの戦いに終止符
+
+「値が無いかもしれない」を型で表し、ぬるぽ(NullPointerException)を防ぎます。
+
+\`\`\`java
+Optional<User> found = repository.findById(3);
+String name = found.map(User::getName)
+                   .orElse("(不明)");
+\`\`\`
+
+:::warn
+\`null\` を返す代わりに \`Optional\` を返す設計にすると、呼び出し側が「無い場合」を必ず意識するようになり、バグが激減します。
+:::
+`,
+      quiz: [
+        {
+          q: "メソッドが1つだけのインターフェースを短く実装する記法は？",
+          choices: ["ラムダ式", "アノテーション", "ジェネリクス"],
+          answer: 0,
+          explain: "ラムダ式です。関数型インターフェースに対して使えます。",
+        },
+        {
+          q: "T を受け取り boolean（条件）を返す関数型インターフェースは？",
+          choices: ["Predicate<T>", "Supplier<T>", "Consumer<T>"],
+          answer: 0,
+          explain: "Predicate<T> は条件判定（test）に使います。",
+        },
+        {
+          q: "「値が無いかもしれない」を型で表しNPEを防ぐのは？",
+          choices: ["Optional", "ArrayList", "HashMap"],
+          answer: 0,
+          explain: "Optional です。null の代わりに使うと安全性が上がります。",
+        },
+      ],
+    },
+    {
+      id: "java-10",
+      title: "【神】Spring 深掘り ― DI・AOP・JPA",
+      level: 4,
+      duration: "18分",
+      body: `
+# 【神】Spring 深掘り ― DI・AOP・JPA
+
+実戦のJavaバックエンドを支える、Spring の核心3つ。
+
+## DI（依存性注入）
+
+オブジェクトの生成と組み立てをSpringに任せ、クラスは「必要なもの」を受け取るだけ。
+
+\`\`\`java
+@Service
+public class OrderService {
+    private final OrderRepository repo;
+    // コンストラクタでSpringが自動的に注入してくれる
+    public OrderService(OrderRepository repo) {
+        this.repo = repo;
+    }
+}
+\`\`\`
+
+依存が外から渡るため、テスト時は**偽のRepository**に差し替え可能。神レベルの「依存性逆転」の実践形です。
+
+## AOP（横断的関心事の分離）
+
+ログ・トランザクション・認証など「あちこちで必要な処理」を本体から切り離します。
+
+\`\`\`java
+@Transactional   // このメソッドを自動でトランザクション化
+public void transfer(...) { ... }
+\`\`\`
+
+\`@Transactional\` を付けるだけで、内部で例外が出れば自動ロールバック。
+
+## JPA / ORM（オブジェクトとDBの橋渡し）
+
+SQLを直接書かず、オブジェクト操作でDBを扱えます。
+
+\`\`\`java
+@Entity
+public class User {
+    @Id @GeneratedValue
+    private Long id;
+    private String name;
+}
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    List<User> findByName(String name);  // メソッド名からSQLを自動生成
+}
+\`\`\`
+
+:::warn
+ORMは便利ですが、生成されるSQLを意識しないと **N+1問題**（神レベル・パフォーマンス参照）を招きます。便利さの裏側を理解するのが神。
+:::
+`,
+      quiz: [
+        {
+          q: "オブジェクトの生成・組み立てをフレームワークに任せ、必要なものを受け取る仕組みは？",
+          choices: ["DI（依存性注入）", "継承", "再帰"],
+          answer: 0,
+          explain: "DIです。テスト時の差し替えが容易になり、依存性逆転を実現します。",
+        },
+        {
+          q: "メソッドに付けるだけで自動的にトランザクション化できるSpringのAOP的注釈は？",
+          choices: ["@Transactional", "@Override", "@Id"],
+          answer: 0,
+          explain: "@Transactional です。例外時に自動でロールバックします。",
+        },
+        {
+          q: "ORM(JPA)を不用意に使うと招きやすい性能問題は？",
+          choices: ["N+1問題", "文字化け", "デッドコード"],
+          answer: 0,
+          explain: "関連を都度取得するとN+1問題になります。生成SQLの意識が必要です。",
+        },
+      ],
+    },
+    {
+      id: "java-11",
+      title: "【神】並行処理とスレッド安全",
+      level: 4,
+      duration: "17分",
+      body: `
+# 【神】並行処理とスレッド安全
+
+サーバーは多数のリクエストを**同時に**処理します。並行処理を制する者が高性能を制します。
+
+## スレッド
+
+処理の流れ。複数スレッドで同時に仕事を進められます。
+
+\`\`\`java
+Runnable task = () -> System.out.println("別スレッドで実行");
+new Thread(task).start();
+\`\`\`
+
+## 競合状態（レースコンディション）
+
+複数スレッドが同じデータを同時に変更すると壊れます。
+
+\`\`\`java
+// ❌ スレッド安全でない：count++ は「読んで+1して書く」3手で割り込まれる
+int count = 0;
+// 複数スレッドが count++ → 数が合わなくなる
+\`\`\`
+
+## 対策
+
+- **synchronized**: 同時に1スレッドだけ通す（ロック）
+- **AtomicInteger** など: 不可分な操作を提供
+- **不変オブジェクト**: そもそも変更しなければ競合しない（最強の対策）
+- **java.util.concurrent**: ConcurrentHashMap、ExecutorService など安全な道具
+
+\`\`\`java
+AtomicInteger count = new AtomicInteger();
+count.incrementAndGet();  // スレッド安全に+1
+\`\`\`
+
+## スレッドプール
+
+スレッドを毎回作るのは高コスト。プールで使い回します。
+
+\`\`\`java
+ExecutorService pool = Executors.newFixedThreadPool(4);
+pool.submit(task);
+\`\`\`
+
+:::tip
+「共有して変更する状態」が諸悪の根源。状態を共有しない／不変にする設計が、最も確実なスレッド安全策です。
+:::
+`,
+      quiz: [
+        {
+          q: "複数スレッドが同じデータを同時に書き換えて壊れる問題は？",
+          choices: ["競合状態(レースコンディション)", "コンパイルエラー", "正規化"],
+          answer: 0,
+          explain: "レースコンディションです。ロックや不可分操作、不変設計で防ぎます。",
+        },
+        {
+          q: "スレッド安全に整数をインクリメントできるクラスは？",
+          choices: ["AtomicInteger", "ArrayList", "String"],
+          answer: 0,
+          explain: "AtomicInteger は不可分な加算を提供します。",
+        },
+        {
+          q: "最も確実なスレッド安全策の考え方は？",
+          choices: ["状態を共有しない・不変にする", "コメントを増やす", "変数名を長くする"],
+          answer: 0,
+          explain: "共有変更状態をなくす（不変化）のが根本対策です。",
+        },
+      ],
+    },
+    {
+      id: "java-12",
+      title: "【神】テスト駆動開発（JUnit / Mockito）",
+      level: 4,
+      duration: "16分",
+      body: `
+# 【神】テスト駆動開発（JUnit / Mockito）
+
+神のコードは「壊れても即わかる」。Javaの自動テストで品質を守ります。
+
+## JUnit ― 単体テスト
+
+\`\`\`java
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+class CalculatorTest {
+    @Test
+    void 足し算ができる() {
+        Calculator c = new Calculator();
+        assertEquals(5, c.add(2, 3));
+    }
+}
+\`\`\`
+
+## TDD（テスト駆動開発）のサイクル
+
+1. **Red**: 失敗するテストを先に書く
+2. **Green**: テストが通る最小限の実装をする
+3. **Refactor**: テストが通る状態を保ったまま整理する
+
+「テストを先に書く」と、仕様が明確になり、過剰実装(YAGNI)も防げます。
+
+## Mockito ― 依存を偽物に差し替える
+
+DB やAPIなど「本物を呼びたくない依存」を偽物(モック)にして、対象だけをテストします。DIにしておくと差し替えが簡単です。
+
+\`\`\`java
+OrderRepository repo = mock(OrderRepository.class);
+when(repo.findById(1L)).thenReturn(Optional.of(new Order()));
+
+OrderService service = new OrderService(repo);  // 偽物を注入
+// repo は本物のDBを叩かない
+\`\`\`
+
+## テストの価値
+
+- リファクタリングを**怖くなくする**
+- 仕様の**実行可能なドキュメント**になる
+- 「テストの無いコードはレガシーコード」
+
+:::tip
+このプラットフォーム自身も GitHub Actions で push のたびに自動チェックしています。神への道は、自動化された安全網の上を歩む道です。
+:::
+`,
+      quiz: [
+        {
+          q: "TDDの正しいサイクルは？",
+          choices: ["Green → Red → Delete", "Red（失敗テスト）→ Green（実装）→ Refactor（整理）", "実装してからテストを書かない"],
+          answer: 1,
+          explain: "失敗するテストを先に書き、通す実装をし、整理する、を繰り返します。",
+        },
+        {
+          q: "DBなど本物の依存を偽物に差し替えてテストする道具は？",
+          choices: ["Mockito（モック）", "インデックス", "for文"],
+          answer: 0,
+          explain: "Mockitoでモックを作り、対象だけを隔離してテストします。DIが前提です。",
+        },
+        {
+          q: "自動テストがもたらす最大の価値は？",
+          choices: ["リファクタリングを怖くなくする", "コードが短くなる", "コメントが不要になる"],
+          answer: 0,
+          explain: "安全網があることで、安心して変更・改善できます。",
+        },
+      ],
+    },
   ],
 };
