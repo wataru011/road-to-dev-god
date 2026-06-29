@@ -1,12 +1,27 @@
 import basics from "./courses/basics.js";
+import frontend from "./courses/frontend.js";
 import javascript from "./courses/javascript.js";
 import sql from "./courses/sql.js";
 import java from "./courses/java.js";
+import devtools from "./courses/devtools.js";
+import webinfra from "./courses/webinfra.js";
+import algorithms from "./courses/algorithms.js";
 import integration from "./courses/integration.js";
 import god from "./courses/god.js";
 
-// 言語別トラック（表示順）
-export const courses = [basics, javascript, sql, java, integration, god];
+// トラック（表示順 = 推奨学習順）
+export const courses = [
+  basics,
+  frontend,
+  javascript,
+  sql,
+  java,
+  devtools,
+  webinfra,
+  algorithms,
+  integration,
+  god,
+];
 
 // 難易度レベルの定義（だんだんレベルが上がる学習の道）
 export const LEVELS = [
