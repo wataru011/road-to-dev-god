@@ -48,7 +48,7 @@ function renderHeader() {
     nav.appendChild(a);
   }
   const tv = link("#/trivia", "📖 小話");
-  if (route.name === "trivia") tv.classList.add("active");
+  if (route.name === "trivia" || route.name === "triviaItem") tv.classList.add("active");
   nav.appendChild(tv);
   updateRank();
 }
@@ -86,18 +86,19 @@ function parseHash() {
   }
   if (parts[0] === "course") return { name: "course", courseId: parts[1] };
   if (parts[0] === "level") return { name: "level", levelId: parts[1] };
+  if (parts[0] === "trivia" && parts[1]) return { name: "triviaItem", id: Number(parts[1]) };
   if (parts[0] === "trivia") return { name: "trivia" };
   return { name: "home" };
 }
 
 function router() {
   const route = parseHash();
-  closeTriviaModal();
   window.scrollTo(0, 0);
   if (route.name === "course") renderCourse(route.courseId);
   else if (route.name === "lesson") renderLesson(route.courseId, route.lessonId);
   else if (route.name === "level") renderLevel(route.levelId);
   else if (route.name === "trivia") renderTrivia();
+  else if (route.name === "triviaItem") renderTriviaDetail(route.id);
   else renderHome();
   renderHeader();
 }
@@ -129,7 +130,7 @@ function renderHome() {
     <div class="course-grid" id="course-grid"></div>
 
     <h2 class="section-title">📖 今日の小話</h2>
-    <div class="trivia-today" id="trivia-today" role="button" tabindex="0"></div>
+    <a class="trivia-today" id="trivia-today" href="#/trivia/${pickDailyTrivia().id}"></a>
     <div style="margin-top:10px"><a href="#/trivia">すべての小話を見る（全${trivia.length}本）→</a></div>
 
     <h2 class="section-title">🏆 獲得バッジ</h2>
@@ -192,10 +193,6 @@ function renderHome() {
     <div class="tt-title">${t.title}</div>
     <div class="tt-body">${t.body}</div>
     <div class="tt-more">▼ クリックで詳しく読む</div>`;
-  today.addEventListener("click", () => openTriviaModal(t));
-  today.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTriviaModal(t); }
-  });
 
   const badgeRow = el.querySelector("#badge-row");
   P.computeBadges(courses).forEach((b) => {
@@ -309,19 +306,14 @@ function renderTrivia() {
   const draw = (items, highlightId) => {
     list.innerHTML = "";
     items.forEach((t) => {
-      const card = document.createElement("div");
+      const card = document.createElement("a");
       card.className = "trivia-card" + (t.id === highlightId ? " flash" : "");
-      card.setAttribute("role", "button");
-      card.setAttribute("tabindex", "0");
+      card.href = `#/trivia/${t.id}`;
       card.innerHTML = `
         <div class="tc-head"><span class="tc-cat">${CAT_ICON[t.cat] || "📖"} ${t.cat}</span><span class="tc-no">#${t.id}</span></div>
         <div class="tc-title">${t.title}</div>
         <div class="tc-body">${t.body}</div>
         <div class="tc-more">▼ クリックで詳しく読む</div>`;
-      card.addEventListener("click", () => openTriviaModal(t));
-      card.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTriviaModal(t); }
-      });
       list.appendChild(card);
     });
   };
@@ -339,38 +331,32 @@ function renderTrivia() {
   app.appendChild(el);
 }
 
-// 小話の詳細をモーダルで表示
-function openTriviaModal(t) {
-  closeTriviaModal();
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.id = "trivia-modal";
-  overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-label="${t.title}">
-      <button class="modal-close" aria-label="閉じる">×</button>
-      <div class="modal-cat">${CAT_ICON[t.cat] || "📖"} ${t.cat} ・ #${t.id}</div>
-      <h2 class="modal-title">${t.title}</h2>
-      <div class="modal-lead">${t.body}</div>
-      <div class="modal-detail prose">${renderMarkdown(t.detail || "")}</div>
-    </div>`;
+// 小話の詳細をページとして表示。前後の小話へ移動できる。
+function renderTriviaDetail(id) {
+  const index = trivia.findIndex((t) => t.id === id);
+  if (index === -1) return renderNotFound();
+  const t = trivia[index];
+  const prev = trivia[index - 1] || null;
+  const next = trivia[index + 1] || null;
 
-  const close = () => closeTriviaModal();
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
-  overlay.querySelector(".modal-close").addEventListener("click", close);
-  document.addEventListener("keydown", escClose);
+  const el = document.createElement("div");
+  el.innerHTML = `
+    <div class="breadcrumb"><a href="#/">ホーム</a> › <a href="#/trivia">面白小話</a> › #${t.id}</div>
+    <article class="trivia-page">
+      <div class="tp-cat">${CAT_ICON[t.cat] || "📖"} ${t.cat} ・ ${index + 1} / ${trivia.length}</div>
+      <h1 class="tp-title">${t.title}</h1>
+      <div class="tp-lead">${t.body}</div>
+      <div class="tp-detail prose">${renderMarkdown(t.detail || "")}</div>
+    </article>
+    <div class="lesson-nav">
+      <div>${prev ? `<a class="btn" href="#/trivia/${prev.id}">← 前の小話</a>` : `<span class="muted">これが最初の小話</span>`}</div>
+      <div><a class="btn" href="#/trivia">📖 一覧へ</a></div>
+      <div>${next ? `<a class="btn primary" href="#/trivia/${next.id}">次の小話 →</a>` : `<span class="muted">これが最後の小話 🎉</span>`}</div>
+    </div>
+  `;
 
-  document.body.appendChild(overlay);
-  document.body.style.overflow = "hidden";
-  requestAnimationFrame(() => overlay.classList.add("show"));
-  overlay.querySelector(".modal-close").focus();
-}
-
-function escClose(e) { if (e.key === "Escape") closeTriviaModal(); }
-function closeTriviaModal() {
-  const m = document.getElementById("trivia-modal");
-  if (m) m.remove();
-  document.body.style.overflow = "";
-  document.removeEventListener("keydown", escClose);
+  app.innerHTML = "";
+  app.appendChild(el);
 }
 
 /* ---------------- コース詳細 ---------------- */
