@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road to Dev God ― システム開発の神への道</title>
+  <meta name="description" content="新人プログラマーをWebシステム開発の神に育てる学習プラットフォーム。Java / JavaScript / SQL をブラウザだけで学べます。" />
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <!-- sql.js (SQLite WASM) はSQL演習を開いたときに動的ロードします -->
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#/">
+        <span class="brand-mark">⚡</span>
+        <span class="brand-text">Road to <strong>Dev God</strong></span>
+      </a>
+      <nav class="top-nav" id="top-nav"></nav>
+      <div class="rank-badge" id="rank-badge" title="あなたの現在のランク">
+        <span class="rank-icon">🥚</span>
+        <span class="rank-info">
+          <span class="rank-title" id="rank-title">見習い</span>
+          <span class="rank-xp" id="rank-xp">0 XP</span>
+        </span>
+      </div>
+    </div>
+    <div class="rank-progress"><div class="rank-progress-bar" id="rank-progress-bar"></div></div>
+  </header>
+
+  <main id="app" class="app-main">
+    <div class="loading">読み込み中…</div>
+  </main>
+
+  <footer class="site-footer">
+    <p>Road to Dev God ― すべてはブラウザ内で完結します。データは端末の localStorage に保存されます。</p>
+  </footer>
+
+  <script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>
