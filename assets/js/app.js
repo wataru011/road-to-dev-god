@@ -92,6 +92,7 @@ function parseHash() {
 
 function router() {
   const route = parseHash();
+  closeTriviaModal();
   window.scrollTo(0, 0);
   if (route.name === "course") renderCourse(route.courseId);
   else if (route.name === "lesson") renderLesson(route.courseId, route.lessonId);
@@ -128,7 +129,8 @@ function renderHome() {
     <div class="course-grid" id="course-grid"></div>
 
     <h2 class="section-title">📖 今日の小話</h2>
-    <a class="trivia-today" href="#/trivia" id="trivia-today"></a>
+    <div class="trivia-today" id="trivia-today" role="button" tabindex="0"></div>
+    <div style="margin-top:10px"><a href="#/trivia">すべての小話を見る（全${trivia.length}本）→</a></div>
 
     <h2 class="section-title">🏆 獲得バッジ</h2>
     <div class="badge-row" id="badge-row"></div>
@@ -189,7 +191,11 @@ function renderHome() {
     <div class="tt-cat">${CAT_ICON[t.cat] || "📖"} ${t.cat}</div>
     <div class="tt-title">${t.title}</div>
     <div class="tt-body">${t.body}</div>
-    <div class="tt-more">小話一覧を見る（全${trivia.length}本）→</div>`;
+    <div class="tt-more">▼ クリックで詳しく読む</div>`;
+  today.addEventListener("click", () => openTriviaModal(t));
+  today.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTriviaModal(t); }
+  });
 
   const badgeRow = el.querySelector("#badge-row");
   P.computeBadges(courses).forEach((b) => {
@@ -305,10 +311,17 @@ function renderTrivia() {
     items.forEach((t) => {
       const card = document.createElement("div");
       card.className = "trivia-card" + (t.id === highlightId ? " flash" : "");
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
       card.innerHTML = `
         <div class="tc-head"><span class="tc-cat">${CAT_ICON[t.cat] || "📖"} ${t.cat}</span><span class="tc-no">#${t.id}</span></div>
         <div class="tc-title">${t.title}</div>
-        <div class="tc-body">${t.body}</div>`;
+        <div class="tc-body">${t.body}</div>
+        <div class="tc-more">▼ クリックで詳しく読む</div>`;
+      card.addEventListener("click", () => openTriviaModal(t));
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTriviaModal(t); }
+      });
       list.appendChild(card);
     });
   };
@@ -324,6 +337,40 @@ function renderTrivia() {
 
   app.innerHTML = "";
   app.appendChild(el);
+}
+
+// 小話の詳細をモーダルで表示
+function openTriviaModal(t) {
+  closeTriviaModal();
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "trivia-modal";
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="${t.title}">
+      <button class="modal-close" aria-label="閉じる">×</button>
+      <div class="modal-cat">${CAT_ICON[t.cat] || "📖"} ${t.cat} ・ #${t.id}</div>
+      <h2 class="modal-title">${t.title}</h2>
+      <div class="modal-lead">${t.body}</div>
+      <div class="modal-detail prose">${renderMarkdown(t.detail || "")}</div>
+    </div>`;
+
+  const close = () => closeTriviaModal();
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector(".modal-close").addEventListener("click", close);
+  document.addEventListener("keydown", escClose);
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = "hidden";
+  requestAnimationFrame(() => overlay.classList.add("show"));
+  overlay.querySelector(".modal-close").focus();
+}
+
+function escClose(e) { if (e.key === "Escape") closeTriviaModal(); }
+function closeTriviaModal() {
+  const m = document.getElementById("trivia-modal");
+  if (m) m.remove();
+  document.body.style.overflow = "";
+  document.removeEventListener("keydown", escClose);
 }
 
 /* ---------------- コース詳細 ---------------- */
