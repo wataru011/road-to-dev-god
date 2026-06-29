@@ -1,13 +1,13 @@
-import basics from "./courses/basics.js";
-import frontend from "./courses/frontend.js";
-import javascript from "./courses/javascript.js";
-import sql from "./courses/sql.js";
-import java from "./courses/java.js";
-import devtools from "./courses/devtools.js";
-import webinfra from "./courses/webinfra.js";
-import algorithms from "./courses/algorithms.js";
-import integration from "./courses/integration.js";
-import god from "./courses/god.js";
+import basics from "./courses/basics.js?v=__BUILD_ID__";
+import frontend from "./courses/frontend.js?v=__BUILD_ID__";
+import javascript from "./courses/javascript.js?v=__BUILD_ID__";
+import sql from "./courses/sql.js?v=__BUILD_ID__";
+import java from "./courses/java.js?v=__BUILD_ID__";
+import devtools from "./courses/devtools.js?v=__BUILD_ID__";
+import webinfra from "./courses/webinfra.js?v=__BUILD_ID__";
+import algorithms from "./courses/algorithms.js?v=__BUILD_ID__";
+import integration from "./courses/integration.js?v=__BUILD_ID__";
+import god from "./courses/god.js?v=__BUILD_ID__";
 
 // トラック（表示順 = 推奨学習順）
 export const courses = [

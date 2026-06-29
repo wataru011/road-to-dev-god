@@ -1,11 +1,11 @@
-import { courses, LEVELS, getLevel, getCourse, getLesson, lessonsForLevel } from "./data/curriculum.js";
-import { renderMarkdown } from "./markdown.js";
-import * as P from "./progress.js";
-import { createJsPlayground } from "./runners/js-runner.js";
-import { createSqlPlayground } from "./runners/sql-runner.js";
-import { createHtmlPlayground } from "./runners/html-runner.js";
-import { createQuiz } from "./runners/quiz.js";
-import { trivia, TRIVIA_CATEGORIES } from "./data/trivia.js";
+import { courses, LEVELS, getLevel, getCourse, getLesson, lessonsForLevel } from "./data/curriculum.js?v=__BUILD_ID__";
+import { renderMarkdown } from "./markdown.js?v=__BUILD_ID__";
+import * as P from "./progress.js?v=__BUILD_ID__";
+import { createJsPlayground } from "./runners/js-runner.js?v=__BUILD_ID__";
+import { createSqlPlayground } from "./runners/sql-runner.js?v=__BUILD_ID__";
+import { createHtmlPlayground } from "./runners/html-runner.js?v=__BUILD_ID__";
+import { createQuiz } from "./runners/quiz.js?v=__BUILD_ID__";
+import { trivia, TRIVIA_CATEGORIES } from "./data/trivia.js?v=__BUILD_ID__";
 
 const app = document.getElementById("app");
 
