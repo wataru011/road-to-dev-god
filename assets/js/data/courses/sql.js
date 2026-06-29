@@ -398,6 +398,155 @@ SELECT * FROM users WHERE id = 6;`,
       ],
     },
     {
+      id: "sql-13",
+      title: "テーブル設計の基礎 ― 主キー・外部キー・正規化・インデックス",
+      level: 2,
+      duration: "16分",
+      body: `
+# テーブル設計の基礎
+
+データベースは「どう問い合わせるか」より前に「**どんなテーブルを作るか**」が肝心です。後から変えにくいので、最初の設計が品質を左右します。ここでは設計の中核となる4つ――主キー・外部キー・正規化・インデックス――を押さえます。
+
+## 0. まず適切なデータ型を選ぶ
+
+- 整数なら \`INTEGER\`、文字列は \`TEXT\`、小数は \`REAL\`、日付は \`TEXT\`(ISO形式)や専用型
+- 「電話番号」を数値にしない(先頭0が消える)など、**意味に合った型**を選ぶ
+
+## 1. 主キー(PRIMARY KEY)
+
+各行を**一意に識別する列**。重複もNULLも許されません。多くは連番の \`id\` を使います。
+
+\`\`\`sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,   -- これが主キー
+  name TEXT NOT NULL
+);
+\`\`\`
+
+主キーがあることで「この行」を確実に指定でき、更新・削除・参照が安全になります。
+
+## 2. 外部キー(FOREIGN KEY)
+
+**他テーブルの主キーを参照する列**。テーブル同士の関連を表し、整合性(存在しないユーザーの注文を作らない等)を守ります。
+
+\`\`\`sql
+CREATE TABLE orders (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,            -- 外部キー
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+\`\`\`
+
+\`orders.user_id\` は \`users.id\` を指す、という宣言です。JOINで名前を引けるのもこの関連のおかげ。
+
+## 3. 制約でデータを守る
+
+- \`NOT NULL\` … 必須(空を許さない)
+- \`UNIQUE\` … 重複禁止(例: email)
+- \`CHECK(条件)\` … 値の範囲(例: \`CHECK(age >= 0)\`)
+- \`DEFAULT 値\` … 未指定時の初期値
+
+制約は「アプリのバグやミスからデータを守る最後の砦」です。
+
+## 4. 正規化 ― 1つの事実は1か所
+
+同じ情報を複数の場所に重複して持たないように整理することを**正規化**と言います。
+
+- ❌ \`orders\` に購入者名を直接コピー → 名前変更時に全部直す羽目に(不整合の温床)
+- ✅ \`orders\` には \`user_id\` だけ持ち、名前は \`users\` から JOIN で引く
+
+ざっくりした段階:
+1. **第1正規形**: 1つのセルに複数の値を詰め込まない
+2. **第2正規形**: 主キーの一部にしか依存しない列を分離
+3. **第3正規形**: 主キー以外への依存(間接的な重複)を排除
+
+目的は「更新時の不整合を防ぐ」こと。
+
+## 5. インデックス ― 検索を速くする
+
+本の索引と同じで、特定の列の検索・結合を高速化します。
+
+\`\`\`sql
+CREATE INDEX idx_orders_user ON orders(user_id);
+\`\`\`
+
+- よく \`WHERE\` / \`JOIN\` で使う列(特に外部キー)に貼るのが定石
+- ただし**書き込みは少し遅くなり容量も増える**ため、貼りすぎ注意。**計測してから**貼る
+
+:::tip
+設計の合言葉は「正しい型・一意な主キー・関連は外部キー・重複は正規化で排除・よく引く列にインデックス」。より深い実践は上級『インデックス・正規化・実行計画』と、神レベル『データベース設計の実践』で扱います。
+:::
+
+下のエディタで、制約付きのテーブルを実際に作って動きを確かめましょう(このDBはページ内のみ・リロードで初期化されます)。
+`,
+      exercises: [
+        {
+          type: "sql",
+          label: "▶ 制約付きテーブルを作る",
+          spec: {
+            starter: `-- 主キー・NOT NULL・UNIQUE・CHECK・DEFAULT を盛り込んだテーブル
+CREATE TABLE IF NOT EXISTS employees (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  age INTEGER CHECK(age >= 18),
+  active INTEGER DEFAULT 1
+);
+INSERT INTO employees (id, name, email, age) VALUES (1, '佐藤 太郎', 'taro@example.com', 30);
+SELECT * FROM employees;`,
+          },
+        },
+        {
+          type: "sql",
+          label: "▶ 制約がデータを守る様子を見る",
+          spec: {
+            starter: `-- CHECK制約に違反するデータは弾かれる(エラーになるのが正しい挙動)
+CREATE TABLE IF NOT EXISTS stock_demo (
+  id INTEGER PRIMARY KEY,
+  qty INTEGER NOT NULL CHECK(qty >= 0)
+);
+INSERT INTO stock_demo VALUES (1, -5);  -- 在庫マイナスは制約違反で失敗する`,
+          },
+        },
+        {
+          type: "sql",
+          label: "▶ 外部キー列にインデックスを作る",
+          spec: {
+            starter: `-- よく検索・結合する外部キー列にインデックスを貼ると高速化できる
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+-- 作成されたインデックスを確認
+SELECT name, tbl_name AS テーブル FROM sqlite_master WHERE type = 'index';`,
+          },
+        },
+      ],
+      quiz: [
+        {
+          q: "各行を一意に識別する(重複もNULLも許さない)列を何という？",
+          choices: ["主キー(PRIMARY KEY)", "外部キー(FOREIGN KEY)", "インデックス"],
+          answer: 0,
+          explain: "主キーです。各行を確実に特定でき、参照や更新の基準になります。",
+        },
+        {
+          q: "他テーブルの主キーを参照し、関連の整合性を守る列は？",
+          choices: ["外部キー(FOREIGN KEY)", "主キー(PRIMARY KEY)", "ビュー"],
+          answer: 0,
+          explain: "外部キーです。例: orders.user_id が users.id を参照します。",
+        },
+        {
+          q: "「1つの事実は1か所だけに持つ」よう重複を排除する設計は？",
+          choices: ["正規化", "インデックス", "トランザクション"],
+          answer: 0,
+          explain: "正規化です。重複をなくし、更新時の不整合を防ぎます。",
+        },
+        {
+          q: "メールアドレスの重複登録を防ぐのに使う制約は？",
+          choices: ["UNIQUE", "DEFAULT", "PRIMARY KEY"],
+          answer: 0,
+          explain: "UNIQUE制約で重複を禁止します(主キーも一意ですが、用途は行の識別)。",
+        },
+      ],
+    },
+    {
       id: "sql-6",
       title: "サブクエリと集合演算",
       level: 3,
@@ -539,14 +688,12 @@ SELECT * FROM users WHERE city = '東京';
         },
         {
           type: "sql",
-          label: "✏️ 練習: インデックスを作る",
+          label: "▶ インデックスを作って確認する",
           spec: {
-            starter: "-- orders テーブルの user_id 列にインデックス idx_orders_user を作成してください\n",
-            expected: "CREATE INDEX idx_orders_user ON orders(user_id);",
-            requires: [
-              { pattern: "create\\s+index", hint: "CREATE INDEX でインデックスを作成します。" },
-              { pattern: "user_id", hint: "対象は orders(user_id) です。" },
-            ],
+            starter: `-- orders テーブルの user_id 列にインデックスを作成(IF NOT EXISTSで何度でも安全に実行可)
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+-- 作成されたインデックス一覧を確認
+SELECT name, tbl_name AS テーブル FROM sqlite_master WHERE type = 'index';`,
           },
         },
       ],
