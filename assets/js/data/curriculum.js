@@ -70,13 +70,14 @@ const LEVEL_MAP = {
   "js-4": 2, "js-5": 2, "js-6": 2,
   "sql-3": 2, "sql-4": 2, "sql-5": 2,
   "java-4": 2, "java-5": 2,
-  "int-1": 2, "int-3": 2,
+  "int-1": 2,
   // Lv3 上級
   "js-7": 3, "js-8": 3,
   "sql-6": 3, "sql-7": 3,
   "java-6": 3, "java-7": 3,
   "int-2": 3,
   // Lv4 神レベル
+  "int-3": 4,
   "god-1": 4, "god-2": 4, "god-3": 4, "god-4": 4, "god-5": 4, "god-6": 4,
 };
 
@@ -85,6 +86,8 @@ for (const c of courses) {
   for (const l of c.lessons) {
     l.level = l.level || LEVEL_MAP[l.id] || 1;
   }
+  // コースページの表示をレベル順に揃える（安定ソートで同レベル内の元順序は保持）
+  c.lessons.sort((a, b) => a.level - b.level);
 }
 
 export function getLevel(id) {
