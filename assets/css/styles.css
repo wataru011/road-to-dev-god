@@ -301,6 +301,24 @@ a:hover { text-decoration: underline; }
 .danger-link { color: var(--red); font-size: 13px; cursor: pointer; background: none; border: none; }
 
 @media (max-width: 640px) {
-  .header-inner { flex-wrap: wrap; }
-  .top-nav { order: 3; width: 100%; }
+  /* iOS Chrome/Safari で backdrop-filter + sticky がヘッダーを覆う不具合を回避し、
+     不透明背景にする。ナビは折り返さず横スクロールにして高さを抑える。 */
+  .site-header { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .header-inner { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+  .brand { font-size: 16px; }
+  .brand-mark { font-size: 20px; }
+  .rank-badge { margin-left: auto; padding: 4px 10px; }
+  .rank-icon { font-size: 18px; }
+  .top-nav {
+    order: 3;
+    flex: 1 0 100%;   /* 全幅で独立した行にする(base の flex:1 を上書き) */
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .top-nav::-webkit-scrollbar { display: none; }
+  .top-nav a { flex: 0 0 auto; white-space: nowrap; padding: 6px 10px; }
 }
