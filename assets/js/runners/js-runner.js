@@ -49,17 +49,27 @@ function runInSandbox(code) {
   });
 }
 
+// コメントを除去（要件チェックが説明コメントに反応しないように）。
+// 行コメント // … は除去するが、URLの :// は保護する。ブロックコメントも除去。
+function stripComments(code) {
+  return code
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
 // ソースコードの要件チェック。requires/forbids は {pattern, hint} の配列。
 // pattern は正規表現文字列。requires=含まれるべき / forbids=含んではいけない。
+// 判定はコメントを除いた実コードに対して行う。
 function checkSource(code, spec) {
+  const src = stripComments(code);
   const errs = [];
   for (const r of spec.requires || []) {
     const re = new RegExp(r.pattern, r.flags || "");
-    if (!re.test(code)) errs.push(r.hint || `コードに必要な記述が含まれていません: ${r.pattern}`);
+    if (!re.test(src)) errs.push(r.hint || `コードに必要な記述が含まれていません: ${r.pattern}`);
   }
   for (const f of spec.forbids || []) {
     const re = new RegExp(f.pattern, f.flags || "");
-    if (re.test(code)) errs.push(f.hint || `この書き方は使わずに解いてください: ${f.pattern}`);
+    if (re.test(src)) errs.push(f.hint || `この書き方は使わずに解いてください: ${f.pattern}`);
   }
   return errs;
 }
