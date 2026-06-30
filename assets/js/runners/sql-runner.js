@@ -147,12 +147,16 @@ export function createSqlPlayground(spec, onSolved) {
   if (checkBtn) {
     checkBtn.addEventListener("click", async () => {
       // ソース要件チェック（指定のSQL構文で書かれているか）。requires/forbids = {pattern, hint}
+      // 判定はコメント(-- 行コメント, /* */ ブロック)を除いた実SQLに対して行う。
+      const srcSql = editor.value
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/--[^\n]*/g, "");
       const srcErrs = [];
       for (const r of spec.requires || []) {
-        if (!new RegExp(r.pattern, r.flags || "i").test(editor.value)) srcErrs.push(r.hint || `必要な構文がありません: ${r.pattern}`);
+        if (!new RegExp(r.pattern, r.flags || "i").test(srcSql)) srcErrs.push(r.hint || `必要な構文がありません: ${r.pattern}`);
       }
       for (const f of spec.forbids || []) {
-        if (new RegExp(f.pattern, f.flags || "i").test(editor.value)) srcErrs.push(f.hint || `この書き方は避けてください: ${f.pattern}`);
+        if (new RegExp(f.pattern, f.flags || "i").test(srcSql)) srcErrs.push(f.hint || `この書き方は避けてください: ${f.pattern}`);
       }
       if (srcErrs.length) {
         output.className = "pg-output";

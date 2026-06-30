@@ -832,7 +832,7 @@ function append(arr, v) {
               { call: "append([], 5)", expect: [5] },
             ],
             requires: [
-              { pattern: "\\.\\.\\.", hint: "スプレッド構文 ...arr で元の配列をコピーしましょう。" },
+              { pattern: "\\.\\.\\.|\\.concat\\(", hint: "元の配列を壊さず、スプレッド構文 [...arr, v] か concat で新しい配列を作りましょう。" },
             ],
             forbids: [
               { pattern: "\\.push\\(", hint: "push は元の配列を破壊します。不変に（新しい配列を作って）解きましょう。" },

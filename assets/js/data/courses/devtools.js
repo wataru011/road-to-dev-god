@@ -653,7 +653,7 @@ function lastItem(arr) {
               { call: "lastItem([42])", expect: 42 },
             ],
             requires: [
-              { pattern: "length\\s*-\\s*1", hint: "最後の要素の添字は length - 1 です。" },
+              { pattern: "length\\s*-\\s*1|\\.at\\(|\\.slice\\(", hint: "最後の要素は arr[arr.length - 1]（または arr.at(-1)）で取得できます。" },
             ],
           },
         },
